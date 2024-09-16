@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
+  "name": "Linkw",
   "version": "3.8.7",
-  "description": "若依管理系统",
-  "author": "若依",
+  "description": "盈仓管理系统",
+  "author": "盈仓",
   "license": "MIT",
   "type": "module",
   "scripts": {
