@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" v-loading="loading" element-loading-text="正在询价中，批量询价需要较长时间...请稍候" element-loading-spinner="el-icon-loading">
     <h1>LTL报价</h1>
     <el-form ref="formRef" :model="formData" :rules="rules" size="default" label-width="160px" label-position="top">
       <el-row :gutter="20">
@@ -91,16 +91,10 @@
         <!-- 上传Excel和添加按钮 -->
         <el-col :span="24" class="button-group">
           <el-button type="primary" @click="addToTable">添加</el-button>
-          <el-upload
-            class="upload-demo"
-            drag
-            :before-upload="handleFileUpload"
-            accept=".xls,.xlsx"
-            :show-file-list="false"
-          >
-            <el-button type="primary">上传Excel文件</el-button>
-            <div slot="tip" class="el-upload__tip">支持扩展名为 .xls 和 .xlsx 的文件</div>
-          </el-upload>
+        </el-col>
+                 <!-- 按钮：弹窗触发按钮 -->
+        <el-col :span="24" class="button-group">
+          <el-button type="primary" @click="openUploadDialog">批量上传报价信息</el-button>
         </el-col>
 
         <!-- 结果表格 -->
@@ -109,7 +103,28 @@
         </el-col>
       </el-row>
     </el-form>
+    <!-- 弹窗 -->
+    <el-dialog title="上传和下载Excel模板" v-model="uploadDialogVisible" width="50%">
+      <!-- 上传Excel -->
+      <el-upload
+        class="upload-demo"
+        drag
+        :before-upload="handleFileUpload"
+        accept=".xls,.xlsx"
+        :show-file-list="false"
+      >
+        <el-button type="primary">上传报价文件</el-button>
+        <div slot="tip" class="el-upload__tip">支持扩展名为 .xls 和 .xlsx 的文件</div>
+      </el-upload>
 
+      <!-- 下载模板按钮 -->
+      <el-button type="success" @click="downloadTemplate">下载报价模板</el-button>
+
+      <!-- 关闭弹窗按钮 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="uploadDialogVisible = false">关闭</el-button>
+      </span>
+    </el-dialog>
     <!-- 固定按钮在页面底部 -->
     <div class="fixed-buttons">
       <el-button type="primary" @click="submitForm">提交</el-button>
@@ -118,6 +133,7 @@
       <el-button type="danger" @click="clearAllData">清空页面</el-button> <!-- 清空页面按钮 -->
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -127,7 +143,15 @@ import * as XLSX from 'xlsx'
 import CargoInfo from './CargoInfo.vue'
 import ResultsTable from './ResultsTable.vue'
 import { submitQuoteForm } from '@/api/shipments/shipments'
-
+// 控制表单加载的状态
+const loading = ref(false);
+// 弹窗控制变量
+const uploadDialogVisible = ref(false)
+// 辅助函数：打开弹窗
+const openUploadDialog = () => {
+  
+  uploadDialogVisible.value = true
+}
 // 初始化表单数据
 const formRef = ref(null)
 const formData = reactive({
@@ -154,12 +178,15 @@ const rules = reactive({
   shipment_service_type: [{ required: true, message: '请输入货运服务类型', trigger: 'blur' }],
   field116: [{ required: true, type: 'array', message: '请选择至少一个附加服务', trigger: 'change' }]
 })
-// 辅助函数：将 Excel 日期序列号转换为标准日期
 function convertExcelDate(excelDate) {
-  const baseDate = new Date(Date.UTC(1899, 11, 30)); // Excel 基准日期为 1899-12-30
-  const convertedDate = new Date(baseDate.getTime() + (excelDate - 1) * 86400000); // 加上天数
-  return convertedDate.toISOString().split('T')[0]; // 格式化为 yyyy-MM-dd
+  const baseDate = new Date(Date.UTC(1899, 11, 30)); // Excel 基准日期是 1899-12-30
+  const offsetDays = excelDate; // Excel 日期偏移天数
+  const convertedDate = new Date(baseDate.getTime() + offsetDays * 86400000); // 加上天数并转换为毫秒
+
+  // 确保返回本地时间，而不是 UTC 时间
+  return new Date(convertedDate.getUTCFullYear(), convertedDate.getUTCMonth(), convertedDate.getUTCDate()).toISOString().split('T')[0];
 }
+
 
 // 辅助函数：处理日期格式（Excel 日期或标准日期）
 function formatDate(date) {
@@ -175,6 +202,7 @@ function formatDate(date) {
 const tableData = ref([]) // 用于显示结果表格的数据
 
 const submitForm = async () => {
+  loading.value = true;
   // 遍历所有表格数据，转换日期格式
   tableData.value = tableData.value.map(row => {
     return {
@@ -186,6 +214,7 @@ const submitForm = async () => {
   // 提交表单逻辑
   if (tableData.value.length === 0) {
     ElMessage.error('表格中没有数据，无法提交');
+    loading.value = false; // 如果没有数据，关闭 loading 状态
     return;
   }
 
@@ -234,6 +263,9 @@ const submitForm = async () => {
   } catch (error) {
     console.error('提交表单时出错:', error);  // 打印错误信息
     ElMessage.error('表单提交失败，请重试');
+  }finally {
+    // 关闭 loading 状态，无论成功还是失败
+    loading.value = false;
   }
 };
 
@@ -292,7 +324,7 @@ const handleFileUpload = (file) => {
     tableData.value = [...tableData.value, ...convertedData];
   };
   reader.readAsArrayBuffer(file);
-
+  uploadDialogVisible.value = false;
   // 阻止默认上传行为
   return false;
 };
@@ -324,6 +356,12 @@ const addToTable = () => {
       ElMessage.error('请检查输入项是否正确')
     }
   })
+}
+const downloadTemplate = () => {
+  const link = document.createElement('a');
+  link.href = '/templates/LTL_Quote_Template.xls';  // 指向 public 目录中的模板文件路径
+  link.download = 'LTL_Quote_Template.xls';  // 下载文件名
+  link.click();
 }
 
 

@@ -157,10 +157,14 @@
       <el-table-column label="收货城市" align="center" prop="city" />
       <el-table-column label="收货州" align="center" prop="state" />
       <el-table-column label="accName" align="center" prop="accName">
-        <!-- <template #default="scope">
-          <dict-tag :options="acc_name" :value="scope.row.accName ? scope.row.accName.split(',') : []"/>
-        </template> -->
-      </el-table-column>
+  <template #default="scope">
+    <span v-if="scope.row.accName">
+      <!-- 将 accName 的值转换为对应的 label -->
+      {{ convertAccNameToLabels(scope.row.accName) }}
+    </span>
+  </template>
+</el-table-column>
+
       <el-table-column label="创建时间" align="center" prop="createdAt" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createdAt, '{y}-{m}-{d}') }}</span>
@@ -185,73 +189,93 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改shipments对话框 -->
-    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-      <el-form ref="shipmentsRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="SO" prop="soNumber">
-          <el-input v-model="form.soNumber" placeholder="请输入SO" />
-        </el-form-item>
-        <el-form-item label="仓库地址" prop="warehouseLocation">
-          <el-select v-model="form.warehouseLocation" placeholder="请选择仓库地址">
-            <el-option
-              v-for="dict in warehouse_location"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="提货时间" prop="pickUpDate">
-          <el-date-picker clearable
-            v-model="form.pickUpDate"
-            type="date"
-            value-format="YYYY-MM-DD"
-            placeholder="请选择提货时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="送货ZIP" prop="deliveryZip">
-          <el-input v-model="form.deliveryZip" placeholder="请输入送货ZIP" />
-        </el-form-item>
-        <el-form-item label="送货类型" prop="deliveryServiceType">
-          <el-select v-model="form.deliveryServiceType" placeholder="请选择送货类型">
-            <el-option
-              v-for="dict in service_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="地址类型" prop="locationType">
-          <el-select v-model="form.locationType" placeholder="请选择地址类型">
-            <el-option
-              v-for="dict in location_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="hasPalletJackForklift" prop="hasPalletJackForklift">
-          <el-select v-model="form.hasPalletJackForklift" placeholder="请选择hasPalletJackForklift">
-            <el-option
-              v-for="dict in pallet_jack"
-              :key="dict.value"
-              :label="dict.label"
-              :value="parseInt(dict.value)"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="提货类型" prop="shipmentServiceType">
-          <el-select v-model="form.shipmentServiceType" placeholder="请选择提货类型">
-            <el-option
-              v-for="dict in service_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
+
+  <!-- 添加或修改shipments对话框 -->
+  <el-dialog :title="title" v-model="open" width="500px" append-to-body>
+    <el-form ref="shipmentsRef" :model="form" :rules="rules" label-width="80px">
+      <!-- SO 输入框，只读 -->
+      <el-form-item label="SO" prop="soNumber">
+        <el-input v-model="form.soNumber" placeholder="请输入SO" readonly/>
+      </el-form-item>
+
+      <!-- 仓库地址 下拉选择，禁用 -->
+      <el-form-item label="仓库地址" prop="warehouseLocation">
+        <el-select v-model="form.warehouseLocation" placeholder="请选择仓库地址" disabled>
+          <el-option
+            v-for="dict in warehouse_location"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+
+      <!-- 提货时间 日期选择器，禁用 -->
+      <el-form-item label="提货时间" prop="pickUpDate">
+        <el-date-picker clearable
+          v-model="form.pickUpDate"
+          type="date"
+          value-format="YYYY-MM-DD"
+          placeholder="请选择提货时间"
+          disabled
+        >
+        </el-date-picker>
+      </el-form-item>
+
+      <!-- 送货ZIP 输入框，只读 -->
+      <el-form-item label="送货ZIP" prop="deliveryZip">
+        <el-input v-model="form.deliveryZip" placeholder="请输入送货ZIP" readonly/>
+      </el-form-item>
+
+      <!-- 送货类型 下拉选择，禁用 -->
+      <el-form-item label="送货类型" prop="deliveryServiceType">
+        <el-select v-model="form.deliveryServiceType" placeholder="请选择送货类型" disabled>
+          <el-option
+            v-for="dict in service_type"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+
+      <!-- 地址类型 下拉选择，禁用 -->
+      <el-form-item label="地址类型" prop="locationType">
+        <el-select v-model="form.locationType" placeholder="请选择地址类型" disabled>
+          <el-option
+            v-for="dict in location_type"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+
+      <!-- PalletJack 下拉选择，禁用 -->
+      <el-form-item label="PalletJack" prop="hasPalletJackForklift">
+        <el-select v-model="form.hasPalletJackForklift" placeholder="请选择hasPalletJackForklift" disabled>
+          <el-option
+            v-for="dict in pallet_jack"
+            :key="dict.value"
+            :label="dict.label"
+            :value="parseInt(dict.value)"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+
+      <!-- 提货类型 下拉选择，禁用 -->
+      <el-form-item label="提货类型" prop="shipmentServiceType">
+        <el-select v-model="form.shipmentServiceType" placeholder="请选择提货类型" disabled>
+          <el-option
+            v-for="dict in service_type"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+
+
         <el-form-item label="收货电话" prop="consigneeNumber">
           <el-input v-model="form.consigneeNumber" placeholder="请输入收货电话" />
         </el-form-item>
@@ -268,15 +292,17 @@
           <el-input v-model="form.state" placeholder="请输入收货州" />
         </el-form-item>
         <el-form-item label="accName" prop="accName">
-          <el-checkbox-group v-model="form.accName">
+          <el-checkbox-group v-model="form.accName" :disabled="true">
             <el-checkbox
               v-for="dict in acc_name"
               :key="dict.value"
               :label="dict.value">
-              {{dict.label}}
+              {{ dict.label }}
             </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
+
+
         <el-divider content-position="center">货物信息信息</el-divider>
         <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
@@ -291,37 +317,38 @@
           <el-table-column label="序号" align="center" prop="index" width="50"/>
           <el-table-column label="报价ID" prop="shipmentId" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.shipmentId" placeholder="请输入报价ID" />
+              <!-- 使用 el-input，并设置为只读 -->
+              <el-input v-model="scope.row.shipmentId" readonly></el-input>
             </template>
           </el-table-column>
           <el-table-column label="货物描述" prop="description" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.description" placeholder="请输入货物描述" />
+              <el-input v-model="scope.row.description" placeholder="请输入货物描述" disabled/>
             </template>
           </el-table-column>
           <el-table-column label="货物件数" prop="pcs" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.pcs" placeholder="请输入货物件数" />
+              <el-input v-model="scope.row.pcs" placeholder="请输入货物件数" disabled/>
             </template>
           </el-table-column>
           <el-table-column label="货物板数" prop="pallets" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.pallets" placeholder="请输入货物板数" />
+              <el-input v-model="scope.row.pallets" placeholder="请输入货物板数" disabled/>
             </template>
           </el-table-column>
           <el-table-column label="货物重量" prop="weight" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.weight" placeholder="请输入货物重量" />
+              <el-input v-model="scope.row.weight" placeholder="请输入货物重量" disabled/>
             </template>
           </el-table-column>
           <el-table-column label="货物尺寸" prop="dimensions" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.dimensions" placeholder="请输入货物尺寸" />
+              <el-input v-model="scope.row.dimensions" placeholder="请输入货物尺寸" disabled/>
             </template>
           </el-table-column>
           <el-table-column label="货物class" prop="freightClass" width="150">
             <template #default="scope">
-              <el-input v-model="scope.row.freightClass" placeholder="请输入货物class" />
+              <el-input v-model="scope.row.freightClass" placeholder="请输入货物class" disabled/>
             </template>
           </el-table-column>
         </el-table>
@@ -429,6 +456,20 @@ function getList() {
     loading.value = false;
   });
 }
+function convertAccNameToLabels(accName) {
+  if (!accName) return '';
+
+  // 如果 accName 是字符串，则先转换为数组
+  const accNameArray = typeof accName === 'string' ? accName.split(',') : accName;
+
+  // 使用 acc_name 来找到对应的 label
+  return accNameArray
+    .map(value => {
+      const found = acc_name.value.find(item => item.value === value.trim());
+      return found ? found.label : value;
+    })
+    .join(', ');
+}
 
 // 取消按钮
 function cancel() {
@@ -494,24 +535,41 @@ function handleAdd() {
   title.value = "添加shipments";
 }
 
-/** 修改按钮操作 */
+  
 function handleUpdate(row) {
   reset();
-  const _id = row.id || ids.value
+  const _id = row.id || ids.value;
+
+  // 从后端获取数据
   getShipments(_id).then(response => {
     form.value = response.data;
-    form.value.accName = form.value.accName.split(",");
+
+    // 将 accName 从字符串转换为数组
+    if (form.value.accName) {
+      form.value.accName = form.value.accName.split(',').map(value => value.trim());
+    } else {
+      form.value.accName = [];
+    }
+
     itemsList.value = response.data.itemsList;
     open.value = true;
     title.value = "修改shipments";
   });
 }
 
-/** 提交按钮 */
+
+
+
+
+
 function submitForm() {
   proxy.$refs["shipmentsRef"].validate(valid => {
     if (valid) {
-      form.value.accName = form.value.accName.join(",");
+      // 提交时将 accName 转换为字符串
+      if (Array.isArray(form.value.accName)) {
+        form.value.accName = form.value.accName.join(",");
+      }
+
       form.value.itemsList = itemsList.value;
       if (form.value.id != null) {
         updateShipments(form.value).then(response => {
@@ -529,6 +587,8 @@ function submitForm() {
     }
   });
 }
+
+
 
 /** 删除按钮操作 */
 function handleDelete(row) {
