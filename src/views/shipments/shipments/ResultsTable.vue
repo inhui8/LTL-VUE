@@ -1,6 +1,7 @@
 <template>
   <div>
-    <el-table :data="groupedTableData" style="width: 100%" border>
+    <el-table :data="groupedTableData" style="width: 100%" border height="450">
+      <el-table-column prop="shipmentId" label="Shipment ID/货件编号" :width="customWidths.shipmentId" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="so_number" label="SO/货件编号" :width="customWidths.so_number" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="accessorials" label="Accessorials/附加服务" :width="customWidths.accessorials" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="warehouse_location" label="Warehouse Location/仓库位置" :width="customWidths.warehouse_location" show-overflow-tooltip :resizable="true"></el-table-column>
@@ -31,16 +32,88 @@
       <el-table-column prop="location_type" label="Location Type/位置类型" :width="customWidths.location_type" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="has_pallet_jack_forklift" label="Has Pallet Jack and Forklift/是否有托盘搬运车和叉车" :width="customWidths.has_pallet_jack_forklift" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="shipment_service_type" label="Shipment Service Type/货运服务类型" :width="customWidths.shipment_service_type" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="daylight" label="供应商1价格" :width="customWidths.daylight" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="auptix_standard_inflexible" label="供应商2 Standard Inflexible" :width="customWidths.auptix_standard_inflexible" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="auptix_flock_direct_inflexible" label="供应商2 Flock Direct Inflexible" :width="customWidths.auptix_flock_direct_inflexible" show-overflow-tooltip :resizable="true"></el-table-column>
+      <!-- Daylight 列 -->
+      <el-table-column prop="daylight" label="Daylight" :width="customWidths.daylight" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'daylight') }">{{ scope.row.daylight }}</div>
+        </template>
+      </el-table-column>
+
+      <!-- Flock Freight Standard 列 -->
+      <el-table-column prop="auptix_standard_inflexible" label="Flock Freight Standard" :width="customWidths.auptix_standard_inflexible" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'auptix_standard_inflexible') }">{{ scope.row.auptix_standard_inflexible }}</div>
+        </template>
+      </el-table-column>
+
+      <!-- Flock Freight Direct 列 -->
+      <el-table-column prop="auptix_flock_direct_inflexible" label="Flock Freight Direct" :width="customWidths.auptix_flock_direct_inflexible" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'auptix_flock_direct_inflexible') }">{{ scope.row.auptix_flock_direct_inflexible }}</div>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="priceConfirmed"
+        label="Price Confirmed/价格确认"
+        :width="customWidths.priceConfirmed"
+        show-overflow-tooltip
+        :resizable="true"
+      >
+        <template #default="scope">
+          <el-select
+            v-model="scope.row.priceConfirmed"
+            placeholder="请选择确认价格"
+            clearable
+            style="width: 200px;"
+          >
+            <el-option label="Daylight" value="Daylight"></el-option>
+            <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
+            <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+          </el-select>
+        </template>
+      </el-table-column>
+
+      <!-- 空字段，内容是确认按钮 -->
+      <el-table-column label="">
+        <template #default="scope">
+          <el-button 
+            type="primary" 
+            @click="updatePriceConfirmed(scope.row)"
+          >
+            确认
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
 
+
 <script setup>
 import { computed, defineProps, reactive } from 'vue'
+import { updateShipments } from '@/api/shipments/shipments'; // 使用你已有的更新方法
+import { ElMessage } from 'element-plus';
 
+// 更新价格确认状态
+const updatePriceConfirmed = async (row) => {
+  try {
+    const shipments = {
+      id: row.shipmentId,  // 确保传递 shipment 的 ID
+      priceConfirmed: row.priceConfirmed  // 用户选择的价格确认
+    };
+
+    // 调用后端API保存数据
+    const response = await updateShipments(shipments);
+    if (response.code === 200) {
+      ElMessage.success('价格确认状态已更新');
+    } else {
+      ElMessage.error('更新失败');
+    }
+  } catch (error) {
+    ElMessage.error('更新价格确认状态失败，请重试');
+    console.error('更新价格确认状态时出错:', error);
+  }
+};
 // 辅助函数：格式化日期为yyyy-mm-dd
 const formatDate = (date) => {
   if (typeof date === 'number') {
@@ -66,8 +139,8 @@ const props = defineProps({
   }
 })
 
-// 可自定义每列宽度的配置
 const customWidths = reactive({
+  shipmentId: 150, // 新增的 shipmentId 字段宽度
   so_number: 120,
   accessorials: 200,
   warehouse_location: 150,
@@ -86,8 +159,11 @@ const customWidths = reactive({
   daylight_class: 150,
   auptix_class: 150,
   auptix_standard_inflexible: 220,
-  auptix_flock_direct_inflexible: 250
+  auptix_flock_direct_inflexible: 250,
+  priceConfirmed: 150 // 新增价格确认字段的宽度
+
 })
+
 
 // 合并相同SO和仓库位置的数据
 const groupedTableData = computed(() => {
@@ -98,6 +174,7 @@ const groupedTableData = computed(() => {
     if (!grouped[key]) {
       // 初始化一个合并后的数据
       grouped[key] = {
+        shipmentId: item.shipmentId, // 新增 shipmentId 字段
         so_number: item.so_number,
         warehouse_location: item.warehouse_location,
         accessorials: item.accessorials,
@@ -112,7 +189,8 @@ const groupedTableData = computed(() => {
         auptix_flock_direct_inflexible: item.auptix_flock_direct_inflexible,
         mesurement: [],
         weight: [],
-        pallets: []
+        pallets: [],
+        priceConfirmed: item.priceConfirmed // 新增价格确认字段
       }
     }
 
@@ -130,6 +208,29 @@ const groupedTableData = computed(() => {
     pallets: group.pallets.join('<br>')
   }))
 })
+// 获取最低价格的背景颜色
+const getLowestPriceStyle = (row, priceType) => {
+  const prices = [
+    row.daylight === 'N/A' ? Infinity : Number(row.daylight),
+    row.auptix_standard_inflexible === 'N/A' ? Infinity : Number(row.auptix_standard_inflexible),
+    row.auptix_flock_direct_inflexible === 'N/A' ? Infinity : Number(row.auptix_flock_direct_inflexible)
+  ];
+
+  const lowestPrice = Math.min(...prices);
+
+  // 如果当前单元格的价格是最低价格或只有一个有效价格，返回红色背景
+  if (Number(row[priceType]) === lowestPrice) {
+    return '#FF8888';
+  }
+
+  // 如果所有其他单元格是 N/A，并且当前有有效价格，返回红色背景
+  const validPricesCount = prices.filter(price => price !== Infinity).length;
+  if (validPricesCount === 1 && prices.includes(Number(row[priceType]))) {
+    return '#FF8888';
+  }
+
+  return '';
+};
 </script>
 
 <style scoped>
