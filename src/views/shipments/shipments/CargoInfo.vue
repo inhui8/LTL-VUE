@@ -7,22 +7,22 @@
     <!-- 显示货物信息 -->
     <el-row :gutter="20" v-for="(item, index) in cargoItems" :key="index" class="cargo-row">
       <el-col :span="4">
-        <el-form-item :label="'Length (CM) ' + (index + 1)" :rules="[{ required: true, message: '请输入Length', trigger: 'blur' }]">
+        <el-form-item :label="'Length (inch) ' + (index + 1)" :rules="[{ required: true, message: '请输入Length', trigger: 'blur' }]">
           <el-input v-model="item.length" placeholder="请输入Length" clearable></el-input>
         </el-form-item>
       </el-col>
       <el-col :span="4">
-        <el-form-item :label="'Width (CM) ' + (index + 1)" :rules="[{ required: true, message: '请输入Width', trigger: 'blur' }]">
+        <el-form-item :label="'Width (inch) ' + (index + 1)" :rules="[{ required: true, message: '请输入Width', trigger: 'blur' }]">
           <el-input v-model="item.width" placeholder="请输入Width" clearable></el-input>
         </el-form-item>
       </el-col>
       <el-col :span="4">
-        <el-form-item :label="'Height (CM) ' + (index + 1)" :rules="[{ required: true, message: '请输入Height', trigger: 'blur' }]">
+        <el-form-item :label="'Height (inch) ' + (index + 1)" :rules="[{ required: true, message: '请输入Height', trigger: 'blur' }]">
           <el-input v-model="item.height" placeholder="请输入Height" clearable></el-input>
         </el-form-item>
       </el-col>
       <el-col :span="4">
-        <el-form-item :label="'Weight (KGS) ' + (index + 1)" :rules="[{ required: true, message: '请输入Weight', trigger: 'blur' }]">
+        <el-form-item :label="'Weight (Lbs) ' + (index + 1)" :rules="[{ required: true, message: '请输入Weight', trigger: 'blur' }]">
           <el-input v-model="item.weight" placeholder="请输入Weight" clearable></el-input>
         </el-form-item>
       </el-col>

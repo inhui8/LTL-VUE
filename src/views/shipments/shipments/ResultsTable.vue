@@ -1,13 +1,24 @@
 <template>
   <div>
     <el-table :data="groupedTableData" style="width: 100%" border height="450">
+      <el-table-column label="删除" width="100">
+        <template #default="scope">
+          <el-button 
+            type="danger" 
+            @click="deleteRow(scope.$index)"
+          >
+            删除
+          </el-button>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="shipmentId" label="Shipment ID/货件编号" :width="customWidths.shipmentId" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="so_number" label="SO/货件编号" :width="customWidths.so_number" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="accessorials" label="Accessorials/附加服务" :width="customWidths.accessorials" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="warehouse_location" label="Warehouse Location/仓库位置" :width="customWidths.warehouse_location" show-overflow-tooltip :resizable="true"></el-table-column>
 
       <!-- 合并后的cargo信息展示 -->
-      <el-table-column label="Mesurement(货物尺寸）/长度(英寸)">
+      <el-table-column label="Mesurement(货物尺寸）/长度(inch)">
         <template #default="scope">
           <div v-html="scope.row.mesurement"></div>
         </template>
@@ -163,7 +174,10 @@ const customWidths = reactive({
   priceConfirmed: 150 // 新增价格确认字段的宽度
 
 })
-
+// Handle row deletion
+const deleteRow = (index) => {
+  props.tableData.splice(index, 1);
+};
 
 // 合并相同SO和仓库位置的数据
 const groupedTableData = computed(() => {
