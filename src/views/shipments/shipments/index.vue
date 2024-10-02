@@ -77,6 +77,7 @@
           <el-option label="Daylight" value="Daylight"></el-option>
           <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
           <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+          <el-option label="Custom Price" value="Custom Price"></el-option>
         </el-select>
       </el-form-item>
 
@@ -160,6 +161,7 @@
         <el-checkbox label="daylightPrice">Daylight</el-checkbox>
         <el-checkbox label="flockfreightStandardPrice">FlockFreight_standard</el-checkbox>
         <el-checkbox label="flockfreightFlockDirectPrice">FlockFreight_Direct</el-checkbox>
+        <el-checkbox label="customPrice">customPrice</el-checkbox>
       </el-checkbox-group>
       <span slot="footer" class="dialog-footer">
         <el-button @click="columnSettingsDialogVisible = false">关闭</el-button>
@@ -229,6 +231,7 @@
       <el-table-column v-if="visibleColumns.daylightPrice" label="Daylight" align="center" prop="daylightPrice" />
       <el-table-column v-if="visibleColumns.flockfreightStandardPrice" label="FlockFreight_standard" align="center" prop="flockfreightStandardPrice" />
       <el-table-column v-if="visibleColumns.flockfreightFlockDirectPrice" label="FlockFreight_Direct" align="center" prop="flockfreightFlockDirectPrice" />
+      <el-table-column v-if="visibleColumns.customPrice" label="Custom Price" align="center" prop="customPrice"> </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shipments:shipments:edit']">修改</el-button>
@@ -258,6 +261,7 @@
         <el-option label="Daylight" value="Daylight"></el-option>
         <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
         <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+        <el-option label="Custom Price" value="Custom Price"></el-option>
       </el-select>
     </el-form-item>
 
@@ -573,7 +577,7 @@ const visibleColumnsKeys = ref([
   'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'pickUpDate', 'deliveryZip', 
   'deliveryServiceType', 'locationType', 'shipmentServiceType', 'consigneeNumber', 'consigneeName', 
   'streetAddress', 'city', 'state', 'accName', 'createdAt', 'daylightPrice', 
-  'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift'  // 添加这一行
+  'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift', 'customPrice'  // 添加这一行
 ]);
 
 

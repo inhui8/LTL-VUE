@@ -177,7 +177,7 @@ const formData = reactive({
   has_pallet_jack_forklift: '',
   shipment_service_type: 'WINDOW',
   field116: [],
-  cargoItems: [{ length: '', width: '', height: '', weight: '', pallets: '' }]
+  cargoItems: [{ length: '', width: '', height: '', weight: '', pallets: '', pcs: '' }]
 })
 
 const rules = reactive({
@@ -231,9 +231,9 @@ const submitForm = async () => {
     ElMessage({
       message: '表格中没有数据，无法提交',
       type: 'error',
-      duration: 5000 // 停留时间为10秒
+      duration: 5000
     });
-    loading.value = false; // 如果没有数据，关闭 loading 状态
+    loading.value = false;
     return;
   }
 
@@ -243,14 +243,14 @@ const submitForm = async () => {
     ElMessage({
       message: '没有新的数据需要提交报价',
       type: 'error',
-      duration: 5000 // 停留时间为10秒
+      duration: 5000
     });
     loading.value = false;
     return;
   }
 
   try {
-    const response = await submitQuoteForm(tableData.value); // 假设 submitQuoteForm 是提交 API 请求的函数
+    const response = await submitQuoteForm(tableData.value);
     console.log(response);
 
     if (response && response.data && Array.isArray(response.data)) {
@@ -263,15 +263,13 @@ const submitForm = async () => {
         // 处理 Daylight API 的响应
         const daylightResponse = responseItem.DaylightApiResponse;
         if (daylightResponse && daylightResponse.startsWith("Error")) {
-          // 如果响应中包含错误信息，显示错误
           ElMessage({
             message: `Daylight API 错误: ${daylightResponse}`,
             type: 'error',
-            duration: 5000 // 停留时间为10秒
+            duration: 5000
           });
           row.daylight = 'N/A';
         } else if (daylightResponse) {
-          // 正常响应时保存 Daylight 的价格
           row.daylight = daylightResponse;
         } else {
           row.daylight = 'N/A';
@@ -282,25 +280,38 @@ const submitForm = async () => {
         const tableSoNumber = String(row.so_number).trim();
         const shipmentId = responseItem.shipmentId;
 
-        // 如果 SO 编号匹配，处理 Auptix 的响应
+        // 如果 SO 编号匹配，处理 Auptix 和 CustomCo 的响应
         if (tableSoNumber === responseSoNumber) {
           row.shipmentId = shipmentId;
 
           const auptixResponse = responseItem.auptixApiResponse;
           if (auptixResponse && auptixResponse.startsWith("Error")) {
-            // 如果响应中包含错误信息，显示错误
             ElMessage({
               message: `Auptix API 错误: ${auptixResponse}`,
               type: 'error',
-              duration: 5000 // 停留时间为10秒
+              duration: 5000
             });
             row.auptix_standard_inflexible = 'N/A';
             row.auptix_flock_direct_inflexible = 'N/A';
           } else if (auptixResponse) {
-            // 如果没有错误，提取 auptixApiResponse 中的价格
             const { standardPrice, flockDirectPrice } = extractAuptixPrices(auptixResponse);
             row.auptix_standard_inflexible = standardPrice || 'N/A';
             row.auptix_flock_direct_inflexible = flockDirectPrice || 'N/A';
+          }
+
+          // 处理 customPrice 的响应
+          const customPriceResponse = responseItem.customPriceApiResponse;
+          if (customPriceResponse && customPriceResponse.startsWith("Error")) {
+            ElMessage({
+              message: `CustomCo API 错误: ${customPriceResponse}`,
+              type: 'error',
+              duration: 5000
+            });
+            row.customPrice = 'N/A';
+          } else if (customPriceResponse) {
+            row.customPrice = customPriceResponse;
+          } else {
+            row.customPrice = 'N/A';
           }
 
           index1++;
@@ -318,30 +329,30 @@ const submitForm = async () => {
     ElMessage({
       message: '表单提交成功！',
       type: 'success',
-      duration: 5000 // 停留时间为10秒
+      duration: 5000
     });
 
   } catch (error) {
-    console.error('提交表单时出错:', error);  // 打印错误信息
+    console.error('提交表单时出错:', error);
 
-    // 如果后端返回了带有 message 的错误消息
     if (error.response && error.response.data && error.response.data.message) {
       ElMessage({
         message: `表单提交失败: ${error.response.data.message}`,
         type: 'error',
-        duration: 5000 // 停留时间为10秒
+        duration: 5000
       });
     } else {
       ElMessage({
         message: '表单提交失败，请重试',
         type: 'error',
-        duration: 5000 // 停留时间为10秒
+        duration: 5000
       });
     }
   } finally {
-    loading.value = false; // 无论成功还是失败，关闭加载状态
+    loading.value = false;
   }
 };
+
 
 
 
@@ -415,11 +426,10 @@ const handleFileUpload = (file) => {
 
 
 
-// 添加表单数据到表格
 const addToTable = () => {
   formRef.value.validate((valid) => {
     if (valid) {
-      // 验证通过后将表单数据添加到表格中
+      // Add the new data including pcs and customPrice
       const cargoItemsWithMeasurement = formData.cargoItems.map(item => ({
         so_number: formData.so_number,
         warehouse_location: formData.warehouse_location,
@@ -432,18 +442,21 @@ const addToTable = () => {
         accessorials: formData.field116.join(', '),
         pallets: item.pallets,
         weight: item.weight,
-        mesurement: `${item.length}*${item.width}*${item.height}`, // 生成Measurement字段
-        isQuoted: false  // 默认未报价
-      }))
+        pcs: item.pcs, // Add pcs field
+        mesurement: `${item.length}*${item.width}*${item.height}`, // Generate Measurement field
+        customPrice: formData.customPrice || '', // Add customPrice field
+        isQuoted: false  // Default to not quoted
+      }));
 
-      // 将新数据添加到表格中
-      tableData.value.push(...cargoItemsWithMeasurement)
-      ElMessage.success('数据已成功添加到表格')
+      // Push new data into the table
+      tableData.value.push(...cargoItemsWithMeasurement);
+      ElMessage.success('数据已成功添加到表格');
     } else {
-      ElMessage.error('请检查输入项是否正确')
+      ElMessage.error('请检查输入项是否正确');
     }
-  })
-}
+  });
+};
+
 const downloadTemplate = () => {
   const link = document.createElement('a');
   link.href = '/templates/LTL_Quote_Template.xls';  // 指向 public 目录中的模板文件路径
@@ -452,16 +465,15 @@ const downloadTemplate = () => {
 }
 
 
-// 下载结果为Excel文件
 const downloadResults = () => {
-  // 重新整理并创建需要下载的数据结构
   const dataToDownload = tableData.value.map(row => ({
     "SO Number": row.so_number,
     "Warehouse Location": row.warehouse_location,
     "Accessorials": row.accessorials,
-    "Mesurement (Length*Width*Height)": row.mesurement.replace(/<br>/g, '\n'), // 将换行标签转换为换行符
+    "Mesurement (Length*Width*Height)": row.mesurement.replace(/<br>/g, '\n'),
     "Weight": row.weight.replace(/<br>/g, '\n'),
     "Pallet Number": row.pallets.replace(/<br>/g, '\n'),
+    "Pieces": row.pcs, // Add pcs to the download
     "Delivery Zip": row.delivery_zip,
     "Pick Up Date": row.pick_up_date,
     "Delivery Service Type": row.delivery_service_type,
@@ -470,17 +482,17 @@ const downloadResults = () => {
     "Shipment Service Type": row.shipment_service_type,
     "Daylight Price": row.daylight,
     "Auptix Standard Inflexible Price": row.auptix_standard_inflexible,
-    "Auptix Flock Direct Inflexible Price": row.auptix_flock_direct_inflexible
+    "Auptix Flock Direct Inflexible Price": row.auptix_flock_direct_inflexible,
+    "Custom Price": row.customPrice, // Add customPrice to the download
   }));
 
-  // 使用 XLSX 将数据转换为 Excel 格式
+  // Convert data to Excel format and download
   const ws = XLSX.utils.json_to_sheet(dataToDownload);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Results');
-
-  // 下载 Excel 文件
   XLSX.writeFile(wb, 'results.xlsx');
 };
+
 
 
 // 保存数据到 sessionStorage
@@ -521,7 +533,7 @@ const clearAllData = () => {
   sessionStorage.removeItem('tableData');  // 清除表格数据
   formRef.value.resetFields() // 重置表单
   tableData.value = [] // 清空表格数据
-  formData.cargoItems = [{ length: '', width: '', height: '', weight: '', pallets: '' }] // 重置货物信息
+  formData.cargoItems = [{ length: '', width: '', height: '', weight: '', pallets: '', pcs: '' }] // 重置货物信息
   ElMessage.success('页面已清空')
 };
 

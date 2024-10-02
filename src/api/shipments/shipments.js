@@ -71,7 +71,8 @@ export function submitQuoteForm(formData) {
     mergedData[soNumber].itemsList.push({
       dimensions: item.mesurement || '',  // 处理空或缺失的 mesurement 字段
       weight: item.weight || 0,           // 处理空或缺失的 weight 字段
-      pallets: item.pallets || 0          // 处理空或缺失的 pallets 字段
+      pallets: item.pallets || 0,          // 处理空或缺失的 pallets 字段
+      pcs: item.pcs || 0  
     });
   });
 
