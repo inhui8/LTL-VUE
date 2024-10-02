@@ -8,7 +8,7 @@
       <el-checkbox-group v-model="selectedApis" style="margin-bottom: 20px;">
         <el-checkbox label="daylight">Daylight API</el-checkbox>
         <el-checkbox label="auptix">Auptix API</el-checkbox>
-        <el-checkbox label="cnusaexpress">CNUSA Express API</el-checkbox>
+        <el-checkbox label="customPrice">custom API</el-checkbox>
       </el-checkbox-group>
 
       <!-- 非联宇利润 和 联宇利润 在同一行 -->

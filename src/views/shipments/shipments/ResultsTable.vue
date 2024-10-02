@@ -1,12 +1,24 @@
 <template>
   <div>
-    <el-table :data="groupedTableData" style="width: 100%" border>
+    <el-table :data="groupedTableData" style="width: 100%" border height="450">
+      <el-table-column label="删除" width="100">
+        <template #default="scope">
+          <el-button 
+            type="danger" 
+            @click="deleteRow(scope.$index)"
+          >
+            删除
+          </el-button>
+        </template>
+      </el-table-column>
+
+      <el-table-column prop="shipmentId" label="Shipment ID/货件编号" :width="customWidths.shipmentId" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="so_number" label="SO/货件编号" :width="customWidths.so_number" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="accessorials" label="Accessorials/附加服务" :width="customWidths.accessorials" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="warehouse_location" label="Warehouse Location/仓库位置" :width="customWidths.warehouse_location" show-overflow-tooltip :resizable="true"></el-table-column>
 
       <!-- 合并后的cargo信息展示 -->
-      <el-table-column label="Mesurement(货物尺寸）/长度(英寸)">
+      <el-table-column label="Mesurement(货物尺寸）/长度(inch)">
         <template #default="scope">
           <div v-html="scope.row.mesurement"></div>
         </template>
@@ -23,6 +35,11 @@
           <div v-html="scope.row.pallets"></div>
         </template>
       </el-table-column>
+      <el-table-column label="PCS/件数" :width="customWidths.pcs" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div v-html="scope.row.pcs"></div>
+        </template>
+      </el-table-column>
 
       <!-- 其他字段 -->
       <el-table-column prop="delivery_zip" label="Delivery Zip/送货邮编" :width="customWidths.delivery_zip" show-overflow-tooltip :resizable="true"></el-table-column>
@@ -31,16 +48,96 @@
       <el-table-column prop="location_type" label="Location Type/位置类型" :width="customWidths.location_type" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="has_pallet_jack_forklift" label="Has Pallet Jack and Forklift/是否有托盘搬运车和叉车" :width="customWidths.has_pallet_jack_forklift" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="shipment_service_type" label="Shipment Service Type/货运服务类型" :width="customWidths.shipment_service_type" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="daylight" label="供应商1价格" :width="customWidths.daylight" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="auptix_standard_inflexible" label="供应商2 Standard Inflexible" :width="customWidths.auptix_standard_inflexible" show-overflow-tooltip :resizable="true"></el-table-column>
-      <el-table-column prop="auptix_flock_direct_inflexible" label="供应商2 Flock Direct Inflexible" :width="customWidths.auptix_flock_direct_inflexible" show-overflow-tooltip :resizable="true"></el-table-column>
+      <!-- Daylight 列 -->
+      <el-table-column prop="daylight" label="Daylight" :width="customWidths.daylight" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'daylight') }">{{ scope.row.daylight }}</div>
+        </template>
+      </el-table-column>
+
+      <!-- Flock Freight Standard 列 -->
+      <el-table-column prop="auptix_standard_inflexible" label="Flock Freight Standard" :width="customWidths.auptix_standard_inflexible" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'auptix_standard_inflexible') }">{{ scope.row.auptix_standard_inflexible }}</div>
+        </template>
+      </el-table-column>
+
+      <!-- Flock Freight Direct 列 -->
+      <el-table-column prop="auptix_flock_direct_inflexible" label="Flock Freight Direct" :width="customWidths.auptix_flock_direct_inflexible" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'auptix_flock_direct_inflexible') }">{{ scope.row.auptix_flock_direct_inflexible }}</div>
+        </template>
+      </el-table-column>
+            <!-- Add the new customPrice column -->
+      <el-table-column prop="customPrice" label="Custom Price" :width="customWidths.customPrice" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'customPrice') }">{{ scope.row.customPrice }}</div>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="priceConfirmed"
+        label="Price Confirmed/价格确认"
+        :width="customWidths.priceConfirmed"
+        show-overflow-tooltip
+        :resizable="true"
+      >
+        <template #default="scope">
+          <el-select
+            v-model="scope.row.priceConfirmed"
+            placeholder="请选择确认价格"
+            clearable
+            style="width: 200px;"
+          >
+            <el-option label="Daylight" value="Daylight"></el-option>
+            <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
+            <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+            <el-option label="Custom Price" value="Custom Price"></el-option> <!-- Added customPrice option -->
+          </el-select>
+        </template>
+      </el-table-column>
+
+
+      <!-- 空字段，内容是确认按钮 -->
+      <el-table-column label="">
+        <template #default="scope">
+          <el-button 
+            type="primary" 
+            @click="updatePriceConfirmed(scope.row)"
+          >
+            确认
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
 
+
 <script setup>
 import { computed, defineProps, reactive } from 'vue'
+import { updateShipments } from '@/api/shipments/shipments'; // 使用你已有的更新方法
+import { ElMessage } from 'element-plus';
 
+// 更新价格确认状态
+const updatePriceConfirmed = async (row) => {
+  try {
+    const shipments = {
+      id: row.shipmentId,  // 确保传递 shipment 的 ID
+      priceConfirmed: row.priceConfirmed  // 用户选择的价格确认
+    };
+
+    // 调用后端API保存数据
+    const response = await updateShipments(shipments);
+    if (response.code === 200) {
+      ElMessage.success('价格确认状态已更新');
+    } else {
+      ElMessage.error('更新失败');
+    }
+  } catch (error) {
+    ElMessage.error('更新价格确认状态失败，请重试');
+    console.error('更新价格确认状态时出错:', error);
+  }
+};
 // 辅助函数：格式化日期为yyyy-mm-dd
 const formatDate = (date) => {
   if (typeof date === 'number') {
@@ -66,8 +163,8 @@ const props = defineProps({
   }
 })
 
-// 可自定义每列宽度的配置
 const customWidths = reactive({
+  shipmentId: 150, // 新增的 shipmentId 字段宽度
   so_number: 120,
   accessorials: 200,
   warehouse_location: 150,
@@ -77,6 +174,7 @@ const customWidths = reactive({
   weight: 120,
   delivery_zip: 120,
   pallets: 150,
+  pcs: 120,
   pick_up_date: 150,
   delivery_service_type: 200,
   location_type: 150,
@@ -86,18 +184,26 @@ const customWidths = reactive({
   daylight_class: 150,
   auptix_class: 150,
   auptix_standard_inflexible: 220,
-  auptix_flock_direct_inflexible: 250
+  auptix_flock_direct_inflexible: 250,
+  priceConfirmed: 150, // 新增价格确认字段的宽度
+  customPrice: 150 // New field for customPrice
+
 })
+// Handle row deletion
+const deleteRow = (index) => {
+  props.tableData.splice(index, 1);
+};
 
 // 合并相同SO和仓库位置的数据
 const groupedTableData = computed(() => {
-  const grouped = {}
+  const grouped = {};
   props.tableData.forEach(item => {
-    const key = `${item.so_number}-${item.warehouse_location}`
+    const key = `${item.so_number}-${item.warehouse_location}`;
 
     if (!grouped[key]) {
       // 初始化一个合并后的数据
       grouped[key] = {
+        shipmentId: item.shipmentId, // 新增 shipmentId 字段
         so_number: item.so_number,
         warehouse_location: item.warehouse_location,
         accessorials: item.accessorials,
@@ -112,24 +218,55 @@ const groupedTableData = computed(() => {
         auptix_flock_direct_inflexible: item.auptix_flock_direct_inflexible,
         mesurement: [],
         weight: [],
-        pallets: []
-      }
+        pallets: [],
+        pcs: [], // Add pcs field
+        priceConfirmed: item.priceConfirmed, // 新增价格确认字段
+        customPrice: item.customPrice // Add customPrice field
+      };
     }
 
     // 合并货物信息
-    grouped[key].mesurement.push(item.mesurement)
-    grouped[key].weight.push(item.weight)
-    grouped[key].pallets.push(item.pallets)
-  })
+    grouped[key].mesurement.push(item.mesurement);
+    grouped[key].weight.push(item.weight);
+    grouped[key].pallets.push(item.pallets);
+    grouped[key].pcs.push(item.pcs); // Add pcs information to the group
+  });
 
   // 将合并后的数据转换为数组格式，并将合并后的货物信息进行换行处理
   return Object.values(grouped).map(group => ({
     ...group,
     mesurement: group.mesurement.join('<br>'),
     weight: group.weight.join('<br>'),
-    pallets: group.pallets.join('<br>')
-  }))
-})
+    pallets: group.pallets.join('<br>'),
+    pcs: group.pcs.join('<br>') // Join pcs with line breaks
+  }));
+});
+
+// Helper function for background color
+const getLowestPriceStyle = (row, priceType) => {
+  // Parse all prices and handle cases where they are not valid numbers
+  const prices = [
+    row.daylight === 'N/A' || row.daylight === null || row.daylight === undefined ? Infinity : Number(row.daylight),
+    row.auptix_standard_inflexible === 'N/A' || row.auptix_standard_inflexible === null || row.auptix_standard_inflexible === undefined ? Infinity : Number(row.auptix_standard_inflexible),
+    row.auptix_flock_direct_inflexible === 'N/A' || row.auptix_flock_direct_inflexible === null || row.auptix_flock_direct_inflexible === undefined ? Infinity : Number(row.auptix_flock_direct_inflexible),
+    row.customPrice === 'N/A' || row.customPrice === null || row.customPrice === undefined ? Infinity : Number(row.customPrice) // Include customPrice
+  ];
+
+  // Find the minimum price from the list
+  const lowestPrice = Math.min(...prices);
+  // If all prices are Infinity, there is no valid price to compare
+  if (lowestPrice === Infinity) {
+    return ''; // No valid price, so return an empty string
+  }
+  // Check if the current price is the lowest
+  if (Number(row[priceType]) === lowestPrice) {
+    return '#FF8888'; // Highlight the cell if it's the lowest price
+  }
+  return ''; // Default return if the price is not the lowest
+};
+
+
+
 </script>
 
 <style scoped>

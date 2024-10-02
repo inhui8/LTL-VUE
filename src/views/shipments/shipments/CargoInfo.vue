@@ -1,5 +1,9 @@
 <template>
   <div>
+    <!-- 添加货物信息按钮 -->
+    <div class="add-button-container">
+      <el-button type="primary" @click="addCargo">添加货物信息</el-button>
+    </div>
     <!-- 显示货物信息 -->
     <el-row :gutter="20" v-for="(item, index) in cargoItems" :key="index" class="cargo-row">
       <el-col :span="4">
@@ -18,7 +22,7 @@
         </el-form-item>
       </el-col>
       <el-col :span="4">
-        <el-form-item :label="'Weight (Ibs) ' + (index + 1)" :rules="[{ required: true, message: '请输入Weight', trigger: 'blur' }]">
+        <el-form-item :label="'Weight (Lbs) ' + (index + 1)" :rules="[{ required: true, message: '请输入Weight', trigger: 'blur' }]">
           <el-input v-model="item.weight" placeholder="请输入Weight" clearable></el-input>
         </el-form-item>
       </el-col>
@@ -28,13 +32,14 @@
         </el-form-item>
       </el-col>
       <el-col :span="4">
+        <el-form-item :label="'Pieces ' + (index + 1)" :rules="[{ required: true, message: '请输入件数', trigger: 'blur' }]">
+          <el-input v-model="item.pcs" placeholder="请输入件数" clearable></el-input>
+        </el-form-item>
+      </el-col>
+      <el-col :span="4">
         <el-button type="danger" @click="removeCargo(index)" class="remove-button" v-if="cargoItems.length > 1">删除货物信息</el-button>
       </el-col>
     </el-row>
-    <!-- 添加货物信息按钮 -->
-    <div class="add-button-container">
-      <el-button type="primary" @click="addCargo">添加货物信息</el-button>
-    </div>
   </div>
 </template>
 
@@ -44,7 +49,7 @@ import { ref } from 'vue'
 const props = defineProps({
   cargoItems: {
     type: Array,
-    default: () => [{ length: '', width: '', height: '', weight: '', pallets: '' }] // 一开始就有一个空对象
+    default: () => [{ length: '', width: '', height: '', weight: '', pallets: '', pcs: '' }] // Add 'pcs' to the initial empty object
   }
 })
 const emit = defineEmits(['update:cargoItems'])
@@ -56,7 +61,8 @@ const addCargo = () => {
     width: '',
     height: '',
     weight: '',
-    pallets: ''
+    pallets: '',
+    pcs: '' // Initialize 'pcs' field
   }
   props.cargoItems.push(newCargo)
   emit('update:cargoItems', props.cargoItems)
@@ -77,10 +83,11 @@ const removeCargo = (index) => {
 }
 
 .remove-button {
-  margin-top: 32px; /* 调整按钮与输入框垂直对齐 */
+  margin-top: 32px; /* Adjust button alignment */
 }
 
 .add-button-container {
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 </style>

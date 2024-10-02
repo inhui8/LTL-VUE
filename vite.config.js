@@ -29,10 +29,20 @@ export default defineConfig(({ mode, command }) => {
       host: true,
       open: true,
       proxy: {
-        // https://cn.vitejs.dev/config/#server-proxy
+    //     '/dev-api': {
+    //       target: 'http://35.82.110.177:8080',
+    //       changeOrigin: true,
+    //       rewrite: (p) => p.replace(/^\/dev-api/, '')
+    //     },
+    //     '/prod-api': {
+    //       target: 'http://35.82.110.177:8080',
+    //       changeOrigin: true,
+    //       rewrite: (p) => p.replace(/^\/prod-api/, '')
+    //     }
+    //   }
+    // },
         '/dev-api': {
-          target: 'http://35.90.98.177:8080',
-          // target: 'http://linkw.us-west-1.elasticbeanstalk.com/',
+          target: 'http://localhost:8080',
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/dev-api/, '')
         }

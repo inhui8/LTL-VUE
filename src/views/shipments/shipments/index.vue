@@ -15,7 +15,7 @@
             v-for="dict in warehouse_location"
             :key="dict.value"
             :label="dict.label"
-            :value="dict.value"
+            :value="dict.label"
           />
         </el-select>
       </el-form-item>
@@ -59,18 +59,33 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="创建时间" prop="createdAt">
-        <el-date-picker clearable
-          v-model="queryParams.createdAt"
-          type="date"
-          value-format="YYYY-MM-DD"
-          placeholder="请选择创建时间">
-        </el-date-picker>
+      <el-form-item label="创建时间" prop="createdAtRange">
+  <el-date-picker 
+    clearable
+    v-model="queryParams.createdAtRange"
+    type="daterange"
+    range-separator="至"
+    start-placeholder="开始日期"
+    end-placeholder="结束日期"
+    value-format="YYYY-MM-DD"
+    placeholder="请选择创建时间段">
+  </el-date-picker>
+</el-form-item>
+
+      <el-form-item label="价格确认" prop="priceConfirmed">
+        <el-select v-model="queryParams.priceConfirmed" placeholder="请选择价格确认" clearable>
+          <el-option label="Daylight" value="Daylight"></el-option>
+          <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
+          <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+          <el-option label="Custom Price" value="Custom Price"></el-option>
+        </el-select>
       </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
+      
     </el-form>
 
     <el-row :gutter="10" class="mb8">
@@ -93,7 +108,7 @@
           v-hasPermi="['shipments:shipments:edit']"
         >修改</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button
           type="danger"
           plain
@@ -102,7 +117,7 @@
           @click="handleDelete"
           v-hasPermi="['shipments:shipments:remove']"
         >删除</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button
           type="warning"
@@ -113,70 +128,114 @@
         >导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+            <!-- 新增列设置按钮 -->
+            <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="Setting"
+          @click="columnSettingsDialogVisible = true"
+        >列设置</el-button>
+      </el-col>
     </el-row>
-
-    <el-table v-loading="loading" :data="shipmentsList" @selection-change="handleSelectionChange">
+<!-- 列设置对话框 -->
+<el-dialog title="列设置" v-model="columnSettingsDialogVisible" width="30%">
+      <el-checkbox-group v-model="visibleColumnsKeys">
+        <el-checkbox label="id">报价ID</el-checkbox>
+        <el-checkbox label="priceConfirmed">价格确认</el-checkbox>
+        <el-checkbox label="soNumber">SO</el-checkbox>
+        <el-checkbox label="warehouseLocation">仓库地址</el-checkbox>
+        <el-checkbox label="pickUpDate">提货时间</el-checkbox>
+        <el-checkbox label="deliveryZip">送货ZIP</el-checkbox>
+        <el-checkbox label="deliveryServiceType">送货类型</el-checkbox>
+        <el-checkbox label="hasPalletJackForklift">有托盘车和叉车</el-checkbox>
+        <el-checkbox label="locationType">地址类型</el-checkbox>
+        <el-checkbox label="shipmentServiceType">提货类型</el-checkbox>
+        <el-checkbox label="consigneeNumber">收货电话</el-checkbox>
+        <el-checkbox label="consigneeName">收货人名</el-checkbox>
+        <el-checkbox label="streetAddress">收货地址</el-checkbox>
+        <el-checkbox label="city">收货城市</el-checkbox>
+        <el-checkbox label="state">收货州</el-checkbox>
+        <el-checkbox label="accName">accName</el-checkbox>
+        <el-checkbox label="createdAt">创建时间</el-checkbox>
+        <el-checkbox label="daylightPrice">Daylight</el-checkbox>
+        <el-checkbox label="flockfreightStandardPrice">FlockFreight_standard</el-checkbox>
+        <el-checkbox label="flockfreightFlockDirectPrice">FlockFreight_Direct</el-checkbox>
+        <el-checkbox label="customPrice">customPrice</el-checkbox>
+      </el-checkbox-group>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="columnSettingsDialogVisible = false">关闭</el-button>
+      </span>
+    </el-dialog>
+    <el-table v-loading="loading" :data="shipmentsList" @selection-change="handleSelectionChange"  height="590">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="报价ID" align="center" prop="id" />
-      <el-table-column label="SO" align="center" prop="soNumber" />
-      <el-table-column label="仓库地址" align="center" prop="warehouseLocation">
+      <el-table-column v-if="visibleColumns.id" label="报价ID" align="center" prop="id" />
+      <el-table-column v-if="visibleColumns.priceConfirmed" label="价格确认" align="center" prop="priceConfirmed">
+        <template #default="scope">
+          <span>{{ scope.row.priceConfirmed }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column v-if="visibleColumns.soNumber" label="SO" align="center" prop="soNumber" />
+      <el-table-column v-if="visibleColumns.warehouseLocation" label="仓库地址" align="center" prop="warehouseLocation">
         <!-- <template #default="scope">
           <dict-tag :options="warehouse_location" :value="scope.row.warehouseLocation"/>
         </template> -->
       </el-table-column>
-      <el-table-column label="提货时间" align="center" prop="pickUpDate" width="180">
+      <el-table-column v-if="visibleColumns.pickUpDate" label="提货时间" align="center" prop="pickUpDate" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.pickUpDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="送货ZIP" align="center" prop="deliveryZip" />
-      <el-table-column label="送货类型" align="center" prop="deliveryServiceType">
+      <el-table-column v-if="visibleColumns.deliveryZip" label="送货ZIP" align="center" prop="deliveryZip" />
+      <el-table-column v-if="visibleColumns.deliveryServiceType" label="送货类型" align="center" prop="deliveryServiceType">
         <!-- <template #default="scope">
           <dict-tag :options="service_type" :value="scope.row.deliveryServiceType"/>
         </template> -->
       </el-table-column>
-      <el-table-column label="地址类型" align="center" prop="locationType">
+      <el-table-column v-if="visibleColumns.locationType" label="地址类型" align="center" prop="locationType">
         <!-- <template #default="scope">
           <dict-tag :options="location_type" :value="scope.row.locationType"/>
         </template> -->
       </el-table-column>
-      <el-table-column label="hasPalletJackForklift" align="center" prop="hasPalletJackForklift">
+      <el-table-column v-if="visibleColumns.hasPalletJackForklift" label="有托盘车和叉车" align="center" prop="hasPalletJackForklift">
         <template #default="scope">
           <dict-tag :options="pallet_jack" :value="scope.row.hasPalletJackForklift"/>
-          <span>{{ scope.row.hasPalletJackForklift ? '是' : '否' }}</span>
+          <span>{{ scope.row.hasPalletJackForklift ? '否' : '是' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="提货类型" align="center" prop="shipmentServiceType">
+      <el-table-column v-if="visibleColumns.shipmentServiceType" label="提货类型" align="center" prop="shipmentServiceType">
         <!-- <template #default="scope">
           <dict-tag :options="service_type" :value="scope.row.shipmentServiceType"/>
         </template> -->
       </el-table-column>
-      <el-table-column label="收货电话" align="center" prop="consigneeNumber" />
-      <el-table-column label="收货人名" align="center" prop="consigneeName" />
-      <el-table-column label="收货地址" align="center" prop="streetAddress" />
-      <el-table-column label="收货城市" align="center" prop="city" />
-      <el-table-column label="收货州" align="center" prop="state" />
-      <el-table-column label="accName" align="center" prop="accName">
-  <template #default="scope">
-    <span v-if="scope.row.accName">
-      <!-- 将 accName 的值转换为对应的 label -->
-      {{ convertAccNameToLabels(scope.row.accName) }}
-    </span>
-  </template>
-</el-table-column>
+      <el-table-column v-if="visibleColumns.consigneeNumber" label="收货电话" align="center" prop="consigneeNumber" />
+      <el-table-column v-if="visibleColumns.consigneeNumber" label="收货人名" align="center" prop="consigneeName" />
+      <el-table-column v-if="visibleColumns.streetAddress" label="收货地址" align="center" prop="streetAddress" />
+      <el-table-column v-if="visibleColumns.city" label="收货城市" align="center" prop="city" />
+      <el-table-column v-if="visibleColumns.state" label="收货州" align="center" prop="state" />
+      <el-table-column v-if="visibleColumns.accName" label="accName" align="center" prop="accName">
+        <template #default="scope">
+          <span v-if="scope.row.accName">
+            <!-- 将 accName 的值转换为对应的 label -->
+            {{ convertAccNameToLabels(scope.row.accName) }}
+          </span>
+        </template>
+      </el-table-column>
 
-      <el-table-column label="创建时间" align="center" prop="createdAt" width="180">
+      <el-table-column v-if="visibleColumns.createdAt" label="创建时间" align="center" prop="createdAt" width="180" sortable>
         <template #default="scope">
           <span>{{ parseTime(scope.row.createdAt, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="供应商价格1" align="center" prop="daylightPrice" />
-      <el-table-column label="供应商价格2" align="center" prop="flockfreightStandardPrice" />
-      <el-table-column label="	 供应商价格2" align="center" prop="flockfreightFlockDirectPrice" />
+      <el-table-column v-if="visibleColumns.daylightPrice" label="Daylight" align="center" prop="daylightPrice" />
+      <el-table-column v-if="visibleColumns.flockfreightStandardPrice" label="FlockFreight_standard" align="center" prop="flockfreightStandardPrice" />
+      <el-table-column v-if="visibleColumns.flockfreightFlockDirectPrice" label="FlockFreight_Direct" align="center" prop="flockfreightFlockDirectPrice" />
+      <el-table-column v-if="visibleColumns.customPrice" label="Custom Price" align="center" prop="customPrice"> </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shipments:shipments:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shipments:shipments:remove']">删除</el-button>
+          <!-- <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['shipments:shipments:remove']">删除</el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -193,9 +252,22 @@
   <!-- 添加或修改shipments对话框 -->
   <el-dialog :title="title" v-model="open" width="500px" append-to-body>
     <el-form ref="shipmentsRef" :model="form" :rules="rules" label-width="80px">
+    <el-form-item label="价格确认" prop="priceConfirmed">
+      <el-select
+        v-model="form.priceConfirmed"
+        placeholder="请选择价格确认"
+        :disabled="!!form.priceConfirmed"
+      >
+        <el-option label="Daylight" value="Daylight"></el-option>
+        <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
+        <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
+        <el-option label="Custom Price" value="Custom Price"></el-option>
+      </el-select>
+    </el-form-item>
+
       <!-- SO 输入框，只读 -->
       <el-form-item label="SO" prop="soNumber">
-        <el-input v-model="form.soNumber" placeholder="请输入SO" readonly/>
+        <el-input v-model="form.soNumber" placeholder="请输入SO" />
       </el-form-item>
 
       <!-- 仓库地址 下拉选择，禁用 -->
@@ -304,14 +376,14 @@
 
 
         <el-divider content-position="center">货物信息信息</el-divider>
-        <el-row :gutter="10" class="mb8">
+        <!-- <el-row :gutter="10" class="mb8">
           <el-col :span="1.5">
             <el-button type="primary" icon="Plus" @click="handleAddItems">添加</el-button>
           </el-col>
           <el-col :span="1.5">
             <el-button type="danger" icon="Delete" @click="handleDeleteItems">删除</el-button>
           </el-col>
-        </el-row>
+        </el-row> -->
         <el-table :data="itemsList" :row-class-name="rowItemsIndex" @selection-change="handleItemsSelectionChange" ref="items">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column label="序号" align="center" prop="index" width="50"/>
@@ -369,6 +441,7 @@ import { listShipments, getShipments, delShipments, addShipments, updateShipment
 const { proxy } = getCurrentInstance();
 const { warehouse_location, location_type, acc_name, pallet_jack, service_type, acc_id } = proxy.useDict('warehouse_location', 'location_type', 'acc_name', 'pallet_jack', 'service_type', 'acc_id');
 
+// 定义表格数据和控制变量
 const shipmentsList = ref([]);
 const itemsList = ref([]);
 const open = ref(false);
@@ -380,7 +453,7 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
-
+const columnSettingsDialogVisible = ref(false);
 const data = reactive({
   form: {},
   queryParams: {
@@ -394,6 +467,7 @@ const data = reactive({
     consigneeName: null,
     streetAddress: null,
     createdAt: null,
+    priceConfirmed: null,  // Add priceConfirmed to query parameters
   },
   rules: {
     soNumber: [
@@ -443,14 +517,42 @@ const data = reactive({
     ],
   }
 });
-
+const visibleColumns = computed(() => {
+  const columns = {};
+  visibleColumnsKeys.value.forEach(key => {
+    columns[key] = true;
+  });
+  return columns;
+});
 const { queryParams, form, rules } = toRefs(data);
-
+// 辅助函数：格式化日期为yyyy-mm-dd
+const formatDate = (date) => {
+  if (typeof date === 'number') {
+    // 如果是 Excel 格式的日期 (数字)，将其转换为 Date 对象
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const daysOffset = date - 1; // Excel日期从1900-01-01开始
+    return new Date(excelEpoch.getTime() + daysOffset * 86400000).toISOString().split('T')[0];
+  } else if (date instanceof Date) {
+    // 如果是 Date 对象，直接格式化
+    return date.toISOString().split('T')[0];
+  } else if (typeof date === 'string') {
+    // 如果是字符串形式的 Date 对象，尝试将其转换为标准格式
+    return new Date(date).toISOString().split('T')[0];
+  }
+  return date;
+}
 /** 查询shipments列表 */
 function getList() {
   loading.value = true;
+
+  // if (queryParams.value.pickUpDate) {
+  //   queryParams.value.pickUpDate = formatDate(queryParams.value.pickUpDate);
+  // }
+  // if (queryParams.value.createdAt) {
+  //   queryParams.value.createdAt = formatDate(queryParams.value.createdAt);
+  // }
+
   listShipments(queryParams.value).then(response => {
-    console.log("后端返回的数据: ", response);
     shipmentsList.value = response.rows;
     total.value = response.total;
     loading.value = false;
@@ -470,6 +572,14 @@ function convertAccNameToLabels(accName) {
     })
     .join(', ');
 }
+// 控制列显示的 keys 和 columns
+const visibleColumnsKeys = ref([
+  'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'pickUpDate', 'deliveryZip', 
+  'deliveryServiceType', 'locationType', 'shipmentServiceType', 'consigneeNumber', 'consigneeName', 
+  'streetAddress', 'city', 'state', 'accName', 'createdAt', 'daylightPrice', 
+  'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift', 'customPrice'  // 添加这一行
+]);
+
 
 // 取消按钮
 function cancel() {
@@ -511,9 +621,16 @@ function reset() {
 
 /** 搜索按钮操作 */
 function handleQuery() {
+  if (queryParams.value.createdAtRange && queryParams.value.createdAtRange.length === 2) {
+    const startOfDay = `${queryParams.value.createdAtRange[0]} 00:00:00`;
+    const endOfDay = `${queryParams.value.createdAtRange[1]} 23:59:59`;
+    queryParams.value.createdAtStart = startOfDay;
+    queryParams.value.createdAtEnd = endOfDay;
+  }
   queryParams.value.pageNum = 1;
   getList();
 }
+
 
 /** 重置按钮操作 */
 function resetQuery() {

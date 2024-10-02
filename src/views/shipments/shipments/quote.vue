@@ -36,8 +36,6 @@
           <el-form-item label="Delivery Service Type/送货服务类型" prop="delivery_service_type">
             <el-select v-model="formData.delivery_service_type" placeholder="请选择Delivery Service Type" clearable :style="{width: '100%'}">
               <el-option label="Call for Appointment" value="CALL_FOR_APPOINTMENT"></el-option>
-              <el-option label="Direct Delivery" value="DIRECT_DELIVERY"></el-option>
-              <el-option label="Standard Delivery" value="STANDARD_DELIVERY"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -48,8 +46,18 @@
               <el-option label="Business with Dock/有货台的商业地址" value="BUSINESS_DOCK"></el-option>
               <el-option label="Business without Dock/无货台的商业地址" value="BUSINESS_NO_DOCK"></el-option>
               <el-option label="Residential/住宅" value="RESIDENTIAL"></el-option>
+              <el-option label="Limited Access/有限进入权限" value="LIMITED_ACCESS"></el-option>
+              <el-option label="Trade Show/贸易展" value="TRADE_SHOW"></el-option>
+              <el-option label="Construction/建筑工地" value="CONSTRUCTION"></el-option>
+              <el-option label="Farm/农场" value="FARM"></el-option>
+              <el-option label="Airport/机场" value="AIRPORT"></el-option>
+              <el-option label="Church/教堂" value="CHURCH"></el-option>
+              <el-option label="Military Base/军事基地" value="MILITARY_BASE"></el-option>
+              <el-option label="Port/港口" value="PORT"></el-option>
+              <el-option label="School/学校" value="SCHOOL"></el-option>
             </el-select>
           </el-form-item>
+
         </el-col>
 
         <el-col :span="12">
@@ -75,9 +83,9 @@
               <el-checkbox label="Construction-Utility-Mine or Rmt Del" >Construction-Utility-Mine or Rmt Del/建筑工地或偏远地区配送</el-checkbox>
               <el-checkbox label="Lift Gate Delivery" >Lift Gate Delivery/尾板配送</el-checkbox>
               <el-checkbox label="Appointment Fee" >Appointment Fee/预约费</el-checkbox>
-              <el-checkbox label="Overlength 8 ft but less than 12 ft" >Overlength 8 ft but less than 12 ft/长度超过8英尺但小于12英尺</el-checkbox>
-              <el-checkbox label="Overlength 12 ft but less than 20 ft" >Overlength 12 ft but less than 20 ft/长度超过12英尺但小于20英尺</el-checkbox>
-              <el-checkbox label="Overlength 20 ft or greater" >Overlength 20 ft or greater/长度超过20英尺或更长</el-checkbox>
+              <el-checkbox label="Overlength 8 ft but less than 12 ft" >Overlength 8 ft but less than 12 ft/长度超过 243.84 cm 但小于 365.76 cm</el-checkbox>
+              <el-checkbox label="Overlength 12 ft but less than 20 ft" >Overlength 12 ft but less than 20 ft/长度超过 365.76 cm 但小于 609.6 cm</el-checkbox>
+              <el-checkbox label="Overlength 20 ft or greater" >Overlength 20 ft or greater/长度超过 609.6 cm 或更长</el-checkbox>
               <el-checkbox label="Compliance Services Fee" >Compliance Services Fee/合规服务费</el-checkbox>
             </el-checkbox-group>
           </el-form-item>
@@ -132,6 +140,8 @@
       <el-button type="success" @click="downloadResults">下载结果</el-button>
       <el-button type="danger" @click="clearAllData">清空页面</el-button> <!-- 清空页面按钮 -->
     </div>
+        <!-- Add the custom footer at the end of the page -->
+        <custom-footer></custom-footer>
   </div>
 
 </template>
@@ -143,6 +153,7 @@ import * as XLSX from 'xlsx'
 import CargoInfo from './CargoInfo.vue'
 import ResultsTable from './ResultsTable.vue'
 import { submitQuoteForm } from '@/api/shipments/shipments'
+import CustomFooter from './notice.vue';
 // 控制表单加载的状态
 const loading = ref(false);
 // 弹窗控制变量
@@ -152,6 +163,8 @@ const openUploadDialog = () => {
   
   uploadDialogVisible.value = true
 }
+
+
 // 初始化表单数据
 const formRef = ref(null)
 const formData = reactive({
@@ -164,7 +177,7 @@ const formData = reactive({
   has_pallet_jack_forklift: '',
   shipment_service_type: 'WINDOW',
   field116: [],
-  cargoItems: [{ length: '', width: '', height: '', weight: '', pallets: '' }]
+  cargoItems: [{ length: '', width: '', height: '', weight: '', pallets: '', pcs: '' }]
 })
 
 const rules = reactive({
@@ -176,7 +189,8 @@ const rules = reactive({
   location_type: [{ required: true, message: '请选择位置类型', trigger: 'change' }],
   has_pallet_jack_forklift: [{ required: true, message: '请选择是否有托盘车和叉车', trigger: 'change' }],
   shipment_service_type: [{ required: true, message: '请输入货运服务类型', trigger: 'blur' }],
-  field116: [{ required: true, type: 'array', message: '请选择至少一个附加服务', trigger: 'change' }]
+  field116: [{ required: true, type: 'array', message: '请选择至少一个附加服务', trigger: 'change' }],
+  price_confirmed: false // 新增字段
 })
 function convertExcelDate(excelDate) {
   const baseDate = new Date(Date.UTC(1899, 11, 30)); // Excel 基准日期是 1899-12-30
@@ -203,6 +217,7 @@ const tableData = ref([]) // 用于显示结果表格的数据
 
 const submitForm = async () => {
   loading.value = true;
+  
   // 遍历所有表格数据，转换日期格式
   tableData.value = tableData.value.map(row => {
     return {
@@ -213,8 +228,24 @@ const submitForm = async () => {
 
   // 提交表单逻辑
   if (tableData.value.length === 0) {
-    ElMessage.error('表格中没有数据，无法提交');
-    loading.value = false; // 如果没有数据，关闭 loading 状态
+    ElMessage({
+      message: '表格中没有数据，无法提交',
+      type: 'error',
+      duration: 5000
+    });
+    loading.value = false;
+    return;
+  }
+
+  const unquotedData = tableData.value.filter(row => !row.isQuoted);
+
+  if (unquotedData.length === 0) {
+    ElMessage({
+      message: '没有新的数据需要提交报价',
+      type: 'error',
+      duration: 5000
+    });
+    loading.value = false;
     return;
   }
 
@@ -223,51 +254,107 @@ const submitForm = async () => {
     console.log(response);
 
     if (response && response.data && Array.isArray(response.data)) {
-      let index1 = 0, index2 = 0;  // 初始化索引
+      let index1 = 0, index2 = 0;
 
-      // 使用 while 循环遍历 tableData 和 response.data
       while (index1 < tableData.value.length && index2 < response.data.length) {
-        const row = tableData.value[index1];  // 获取当前表格行
-        const responseItem = response.data[index2];  // 获取当前响应项
+        const row = tableData.value[index1];
+        const responseItem = response.data[index2];
 
-        // 获取 Daylight 的 Net Charge 和 SO 编号
-        const netCharge = responseItem.DaylightApiResponse;
-        const responseSoNumber = String(responseItem['So_Number:']).trim(); // 确保是字符串并去除空格
-        const tableSoNumber = String(row.so_number).trim(); // 确保是字符串并去除空格
+        // 处理 Daylight API 的响应
+        const daylightResponse = responseItem.DaylightApiResponse;
+        if (daylightResponse && daylightResponse.startsWith("Error")) {
+          ElMessage({
+            message: `Daylight API 错误: ${daylightResponse}`,
+            type: 'error',
+            duration: 5000
+          });
+          row.daylight = 'N/A';
+        } else if (daylightResponse) {
+          row.daylight = daylightResponse;
+        } else {
+          row.daylight = 'N/A';
+        }
 
-        // 检查 SO 编号是否匹配
+        // 处理 SO 编号
+        const responseSoNumber = String(responseItem['So_Number:']).trim();
+        const tableSoNumber = String(row.so_number).trim();
+        const shipmentId = responseItem.shipmentId;
+
+        // 如果 SO 编号匹配，处理 Auptix 和 CustomCo 的响应
         if (tableSoNumber === responseSoNumber) {
-          // 更新当前表格行的 Daylight 列
-          row.daylight = netCharge;
+          row.shipmentId = shipmentId;
 
-          // 提取 auptixApiResponse 中的价格
           const auptixResponse = responseItem.auptixApiResponse;
-          console.log(auptixResponse);
-          const { standardPrice, flockDirectPrice } = extractAuptixPrices(auptixResponse);
-          console.log(standardPrice);
-          // 更新表格行中的 auptix 的两个价格
-          row.auptix_standard_inflexible = standardPrice;
-          row.auptix_flock_direct_inflexible = flockDirectPrice;
+          if (auptixResponse && auptixResponse.startsWith("Error")) {
+            ElMessage({
+              message: `Auptix API 错误: ${auptixResponse}`,
+              type: 'error',
+              duration: 5000
+            });
+            row.auptix_standard_inflexible = 'N/A';
+            row.auptix_flock_direct_inflexible = 'N/A';
+          } else if (auptixResponse) {
+            const { standardPrice, flockDirectPrice } = extractAuptixPrices(auptixResponse);
+            row.auptix_standard_inflexible = standardPrice || 'N/A';
+            row.auptix_flock_direct_inflexible = flockDirectPrice || 'N/A';
+          }
 
-          // 如果匹配上了，两个索引都递增
+          // 处理 customPrice 的响应
+          const customPriceResponse = responseItem.customPriceApiResponse;
+          if (customPriceResponse && customPriceResponse.startsWith("Error")) {
+            ElMessage({
+              message: `CustomCo API 错误: ${customPriceResponse}`,
+              type: 'error',
+              duration: 5000
+            });
+            row.customPrice = 'N/A';
+          } else if (customPriceResponse) {
+            row.customPrice = customPriceResponse;
+          } else {
+            row.customPrice = 'N/A';
+          }
+
           index1++;
           index2++;
         } else {
-          // 如果不匹配，只递增表格的索引
           index1++;
         }
       }
     }
 
-    ElMessage.success('表单提交成功！');
+    // 标记已报价的数据
+    unquotedData.forEach(row => {
+      row.isQuoted = true;
+    });
+    ElMessage({
+      message: '表单提交成功！',
+      type: 'success',
+      duration: 5000
+    });
+
   } catch (error) {
-    console.error('提交表单时出错:', error);  // 打印错误信息
-    ElMessage.error('表单提交失败，请重试');
-  }finally {
-    // 关闭 loading 状态，无论成功还是失败
+    console.error('提交表单时出错:', error);
+
+    if (error.response && error.response.data && error.response.data.message) {
+      ElMessage({
+        message: `表单提交失败: ${error.response.data.message}`,
+        type: 'error',
+        duration: 5000
+      });
+    } else {
+      ElMessage({
+        message: '表单提交失败，请重试',
+        type: 'error',
+        duration: 5000
+      });
+    }
+  } finally {
     loading.value = false;
   }
 };
+
+
+
 
 
 function extractAuptixPrices(auptixResponse) {
@@ -288,8 +375,6 @@ function extractAuptixPrices(auptixResponse) {
       }
     }
   });
-  console.log(rates.standardPrice)
-  console.log(rates.flockDirectPrice)
   return {
     standardPrice: rates.standardPrice || null,
     flockDirectPrice: rates.flockDirectPrice || null
@@ -314,10 +399,20 @@ const handleFileUpload = (file) => {
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-    // 将 Excel 日期转换为标准日期格式
+    // 将 Excel 数据映射到表单字段
     const convertedData = jsonData.map(row => ({
-      ...row,
-      pick_up_date: formatDate(row.pick_up_date)  // 转换 Excel 日期
+      so_number: row['货件编码'],  // Shipment Code
+      accessorials: row['附加服务'],  // Accessorial Services
+      warehouse_location: row['提货仓库'],  // Warehouse Location
+      delivery_zip: row['送货zip'],  // Delivery Zip
+      pick_up_date: formatDate(row['提货时间']),  // Pick Up Date with date formatting
+      delivery_service_type: row['送货服务类型'],  // Delivery Service Type
+      location_type: row['送货地址类型'],  // Delivery Address Type
+      shipment_service_type: row['提货服务类型'],  // Shipment Service Type
+      mesurement: row['货物尺寸'],
+      weight: row['货物重量'],
+      pallets: row['货物板数'],
+      has_pallet_jack_forklift: row['可独立卸货'],  // Can Unload Independently (true/false)
     }));
 
     // 将新上传的数据追加到现有的 tableData 中
@@ -329,11 +424,12 @@ const handleFileUpload = (file) => {
   return false;
 };
 
-// 添加表单数据到表格
+
+
 const addToTable = () => {
   formRef.value.validate((valid) => {
     if (valid) {
-      // 验证通过后将表单数据添加到表格中
+      // Add the new data including pcs and customPrice
       const cargoItemsWithMeasurement = formData.cargoItems.map(item => ({
         so_number: formData.so_number,
         warehouse_location: formData.warehouse_location,
@@ -346,17 +442,21 @@ const addToTable = () => {
         accessorials: formData.field116.join(', '),
         pallets: item.pallets,
         weight: item.weight,
-        mesurement: `${item.length}*${item.width}*${item.height}` // 生成Measurement字段
-      }))
+        pcs: item.pcs, // Add pcs field
+        mesurement: `${item.length}*${item.width}*${item.height}`, // Generate Measurement field
+        customPrice: formData.customPrice || '', // Add customPrice field
+        isQuoted: false  // Default to not quoted
+      }));
 
-      // 将新数据添加到表格中
-      tableData.value.push(...cargoItemsWithMeasurement)
-      ElMessage.success('数据已成功添加到表格')
+      // Push new data into the table
+      tableData.value.push(...cargoItemsWithMeasurement);
+      ElMessage.success('数据已成功添加到表格');
     } else {
-      ElMessage.error('请检查输入项是否正确')
+      ElMessage.error('请检查输入项是否正确');
     }
-  })
-}
+  });
+};
+
 const downloadTemplate = () => {
   const link = document.createElement('a');
   link.href = '/templates/LTL_Quote_Template.xls';  // 指向 public 目录中的模板文件路径
@@ -365,16 +465,15 @@ const downloadTemplate = () => {
 }
 
 
-// 下载结果为Excel文件
 const downloadResults = () => {
-  // 重新整理并创建需要下载的数据结构
   const dataToDownload = tableData.value.map(row => ({
     "SO Number": row.so_number,
     "Warehouse Location": row.warehouse_location,
     "Accessorials": row.accessorials,
-    "Mesurement (Length*Width*Height)": row.mesurement.replace(/<br>/g, '\n'), // 将换行标签转换为换行符
+    "Mesurement (Length*Width*Height)": row.mesurement.replace(/<br>/g, '\n'),
     "Weight": row.weight.replace(/<br>/g, '\n'),
     "Pallet Number": row.pallets.replace(/<br>/g, '\n'),
+    "Pieces": row.pcs, // Add pcs to the download
     "Delivery Zip": row.delivery_zip,
     "Pick Up Date": row.pick_up_date,
     "Delivery Service Type": row.delivery_service_type,
@@ -383,26 +482,62 @@ const downloadResults = () => {
     "Shipment Service Type": row.shipment_service_type,
     "Daylight Price": row.daylight,
     "Auptix Standard Inflexible Price": row.auptix_standard_inflexible,
-    "Auptix Flock Direct Inflexible Price": row.auptix_flock_direct_inflexible
+    "Auptix Flock Direct Inflexible Price": row.auptix_flock_direct_inflexible,
+    "Custom Price": row.customPrice, // Add customPrice to the download
   }));
 
-  // 使用 XLSX 将数据转换为 Excel 格式
+  // Convert data to Excel format and download
   const ws = XLSX.utils.json_to_sheet(dataToDownload);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Results');
-
-  // 下载 Excel 文件
   XLSX.writeFile(wb, 'results.xlsx');
 };
 
 
-// 清空页面所有数据
+
+// 保存数据到 sessionStorage
+const saveDataToSession = () => {
+  sessionStorage.setItem('formData', JSON.stringify(formData));  // 将表单数据转换为 JSON 字符串并保存
+  sessionStorage.setItem('tableData', JSON.stringify(tableData.value));  
+};
+
+// 从 sessionStorage 恢复数据
+const loadDataFromSession = () => {
+  const savedData = sessionStorage.getItem('formData');
+  const savedTableData = sessionStorage.getItem('tableData');
+  if (savedData) {
+    Object.assign(formData, JSON.parse(savedData));  // 恢复数据并覆盖到表单的响应式对象中
+  }
+    // 恢复表格数据
+    if (savedTableData) {
+    tableData.value = JSON.parse(savedTableData);
+  }
+};
+
+// 页面加载时恢复数据
+onMounted(() => {
+  loadDataFromSession();  // 页面挂载时从 sessionStorage 恢复数据
+});
+
+// 监听 formData 的变化，并将其保存到 sessionStorage
+watch(formData, (newValue) => {
+  saveDataToSession();  // 表单数据变化时保存到 sessionStorage
+}, { deep: true });
+watch(tableData, () => {
+  saveDataToSession();  // 表格数据变化时保存
+}, { deep: true });
+// 清空表单和 sessionStorage 数据
+
 const clearAllData = () => {
+  sessionStorage.removeItem('formData');
+  sessionStorage.removeItem('tableData');  // 清除表格数据
   formRef.value.resetFields() // 重置表单
   tableData.value = [] // 清空表格数据
-  formData.cargoItems = [{ length: '', width: '', height: '', weight: '', pallets: '' }] // 重置货物信息
+  formData.cargoItems = [{ length: '', width: '', height: '', weight: '', pallets: '', pcs: '' }] // 重置货物信息
   ElMessage.success('页面已清空')
-}
+};
+
+
 </script>
 
 <style scoped>
@@ -456,5 +591,6 @@ h1 {
 .fixed-buttons .el-button {
   margin: 0 15px;
 }
+
 </style>
 
