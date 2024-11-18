@@ -9,6 +9,8 @@
         <el-checkbox label="daylight">Daylight API</el-checkbox>
         <el-checkbox label="auptix">Auptix API</el-checkbox>
         <el-checkbox label="customPrice">custom API</el-checkbox>
+        <el-checkbox label="XPO">XPO API</el-checkbox>
+        <el-checkbox label="MotherShip">MotherShip API</el-checkbox>
       </el-checkbox-group>
 
       <!-- 非联宇利润 和 联宇利润 在同一行 -->

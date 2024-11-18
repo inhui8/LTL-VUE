@@ -78,7 +78,26 @@
           <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
           <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
           <el-option label="Custom Price" value="Custom Price"></el-option>
+          <el-option label="XPO Price" value="XPO Price"></el-option> <!-- Add this line -->
+          <el-option label="Mothership Price" value="Mothership Price"></el-option>
         </el-select>
+      </el-form-item>
+      <el-form-item label="用户名" prop="userName">
+        <el-input
+          v-model="queryParams.userName"
+          placeholder="请输入用户名"
+          clearable
+          @keyup.enter="handleQuery"
+        />
+      </el-form-item>
+
+      <el-form-item label="部门名称" prop="deptName">
+        <el-input
+          v-model="queryParams.deptName"
+          placeholder="请输入部门名称"
+          clearable
+          @keyup.enter="handleQuery"
+        />
       </el-form-item>
 
       <el-form-item>
@@ -162,6 +181,11 @@
         <el-checkbox label="flockfreightStandardPrice">FlockFreight_standard</el-checkbox>
         <el-checkbox label="flockfreightFlockDirectPrice">FlockFreight_Direct</el-checkbox>
         <el-checkbox label="customPrice">customPrice</el-checkbox>
+        <el-checkbox label="xpoPrice">XPO Price</el-checkbox> <!-- Add this line -->
+        <el-checkbox label="mothershipPrice">Mothership Price</el-checkbox>
+        <el-checkbox label="userName">用户名</el-checkbox>
+        <el-checkbox label="deptName">部门名称</el-checkbox>
+
       </el-checkbox-group>
       <span slot="footer" class="dialog-footer">
         <el-button @click="columnSettingsDialogVisible = false">关闭</el-button>
@@ -222,7 +246,8 @@
           </span>
         </template>
       </el-table-column>
-
+      <el-table-column v-if="visibleColumns.userName" label="用户名" align="center" prop="userName" />
+      <el-table-column v-if="visibleColumns.deptName" label="部门名称" align="center" prop="deptName" />
       <el-table-column v-if="visibleColumns.createdAt" label="创建时间" align="center" prop="createdAt" width="180" sortable>
         <template #default="scope">
           <span>{{ parseTime(scope.row.createdAt, '{y}-{m}-{d}') }}</span>
@@ -232,6 +257,9 @@
       <el-table-column v-if="visibleColumns.flockfreightStandardPrice" label="FlockFreight_standard" align="center" prop="flockfreightStandardPrice" />
       <el-table-column v-if="visibleColumns.flockfreightFlockDirectPrice" label="FlockFreight_Direct" align="center" prop="flockfreightFlockDirectPrice" />
       <el-table-column v-if="visibleColumns.customPrice" label="Custom Price" align="center" prop="customPrice"> </el-table-column>
+      <el-table-column v-if="visibleColumns.xpoPrice" label="XPO Price" align="center" prop="xpoPrice"></el-table-column>
+      <el-table-column v-if="visibleColumns.mothershipPrice" label="Mothership Price" align="center" prop="mothershipPrice" />
+
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['shipments:shipments:edit']">修改</el-button>
@@ -262,6 +290,8 @@
         <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
         <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
         <el-option label="Custom Price" value="Custom Price"></el-option>
+        <el-option label="XPO Price" value="XPO Price"></el-option>
+        <el-option label="Mothership Price" value="Mothership Price"></el-option>
       </el-select>
     </el-form-item>
 
@@ -468,6 +498,8 @@ const data = reactive({
     streetAddress: null,
     createdAt: null,
     priceConfirmed: null,  // Add priceConfirmed to query parameters
+    userName: null,
+    deptName: null,
   },
   rules: {
     soNumber: [
@@ -551,8 +583,9 @@ function getList() {
   // if (queryParams.value.createdAt) {
   //   queryParams.value.createdAt = formatDate(queryParams.value.createdAt);
   // }
-
+  
   listShipments(queryParams.value).then(response => {
+    console.log("Backend response:", response);
     shipmentsList.value = response.rows;
     total.value = response.total;
     loading.value = false;
@@ -574,11 +607,14 @@ function convertAccNameToLabels(accName) {
 }
 // 控制列显示的 keys 和 columns
 const visibleColumnsKeys = ref([
-  'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'pickUpDate', 'deliveryZip', 
-  'deliveryServiceType', 'locationType', 'shipmentServiceType', 'consigneeNumber', 'consigneeName', 
-  'streetAddress', 'city', 'state', 'accName', 'createdAt', 'daylightPrice', 
-  'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift', 'customPrice'  // 添加这一行
+  'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'pickUpDate', 'deliveryZip',
+  'deliveryServiceType', 'locationType', 'shipmentServiceType', 'consigneeNumber', 'consigneeName',
+  'streetAddress', 'city', 'state', 'accName', 'createdAt', 'daylightPrice',
+  'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift', 'customPrice', 'xpoPrice','mothershipPrice',
+  'userName', 'deptName' // Add these lines
 ]);
+
+
 
 
 // 取消按钮
@@ -613,7 +649,8 @@ function reset() {
     version: null,
     daylightPrice: null,
     flockfreightStandardPrice: null,
-    flockfreightFlockDirectPrice: null
+    flockfreightFlockDirectPrice: null,
+    xpoPrice: null, // Add this line
   };
   itemsList.value = [];
   proxy.resetForm("shipmentsRef");

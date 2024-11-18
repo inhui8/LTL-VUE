@@ -12,7 +12,7 @@ import App from './App'
 import store from './store'
 import router from './router'
 import directive from './directive' // directive
-
+import i18n from './locales/index';
 // 注册指令
 import plugins from './plugins' // plugins
 import { download } from '@/utils/request'
@@ -70,6 +70,7 @@ app.use(router)
 app.use(store)
 app.use(plugins)
 app.use(elementIcons)
+app.use(i18n); 
 app.component('svg-icon', SvgIcon)
 
 directive(app)

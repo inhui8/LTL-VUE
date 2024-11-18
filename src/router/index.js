@@ -37,6 +37,7 @@ export const constantRoutes = [
       }
     ]
   },
+
   {
     path: '/login',
     component: () => import('@/views/login'),
@@ -83,7 +84,15 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
+  },
+  {
+    path: '/appointment/appointment/appointment/loadAppt/appt',
+    component: () => import('@/views/appointment/loadAppt/appt.vue'),
+    name: 'ExternalIndex',
+    meta: { title: '外部页面', icon: 'link', noCache: true }
   }
+  
+  
 ]
 
 // 动态路由，基于用户权限动态去加载

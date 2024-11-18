@@ -7,17 +7,11 @@
     <div class="right-menu">
       <template v-if="appStore.device !== 'mobile'">
         <header-search id="header-search" class="right-menu-item" />
-
-        <!-- <el-tooltip content="源码地址" effect="dark" placement="bottom">
-          <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
-        </el-tooltip>
-
-        <el-tooltip content="文档地址" effect="dark" placement="bottom">
-          <ruo-yi-doc id="ruoyi-doc" class="right-menu-item hover-effect" />
-        </el-tooltip> -->
+        
+        <!-- 语言切换组件 -->
+        <language-switch class="right-menu-item hover-effect" />
 
         <screenfull id="screenfull" class="right-menu-item hover-effect" />
-
         <el-tooltip content="布局大小" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
@@ -48,25 +42,24 @@
 </template>
 
 <script setup>
-import { ElMessageBox } from 'element-plus'
-import Breadcrumb from '@/components/Breadcrumb'
-import TopNav from '@/components/TopNav'
-import Hamburger from '@/components/Hamburger'
-import Screenfull from '@/components/Screenfull'
-import SizeSelect from '@/components/SizeSelect'
-import HeaderSearch from '@/components/HeaderSearch'
-import RuoYiGit from '@/components/RuoYi/Git'
-import RuoYiDoc from '@/components/RuoYi/Doc'
-import useAppStore from '@/store/modules/app'
-import useUserStore from '@/store/modules/user'
-import useSettingsStore from '@/store/modules/settings'
+import { ElMessageBox } from 'element-plus';
+import Breadcrumb from '@/components/Breadcrumb';
+import TopNav from '@/components/TopNav';
+import Hamburger from '@/components/Hamburger';
+import Screenfull from '@/components/Screenfull';
+import SizeSelect from '@/components/SizeSelect';
+import HeaderSearch from '@/components/HeaderSearch';
+import LanguageSwitch from '@/components/LanguageSwitch'; // 导入语言切换组件
+import useAppStore from '@/store/modules/app';
+import useUserStore from '@/store/modules/user';
+import useSettingsStore from '@/store/modules/settings';
 
-const appStore = useAppStore()
-const userStore = useUserStore()
-const settingsStore = useSettingsStore()
+const appStore = useAppStore();
+const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 
 function toggleSideBar() {
-  appStore.toggleSideBar()
+  appStore.toggleSideBar();
 }
 
 function handleCommand(command) {
@@ -90,11 +83,11 @@ function logout() {
   }).then(() => {
     userStore.logOut().then(() => {
       location.href = '/index';
-    })
+    });
   }).catch(() => { });
 }
 
-const emits = defineEmits(['setLayout'])
+const emits = defineEmits(['setLayout']);
 function setLayout() {
   emits('setLayout');
 }

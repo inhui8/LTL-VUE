@@ -63,7 +63,10 @@ export function submitQuoteForm(formData) {
         hasPalletJackForklift: item.has_pallet_jack_forklift === 'Yes' ? 1 : 0,
         shipmentServiceType: item.shipment_service_type,
         itemsList: [], // 初始化空的 itemsList
-        warehouseLocation: item.warehouse_location
+        warehouseLocation: item.warehouse_location,
+        customWarehouseAddress: item.custom_warehouse_address || '', // 添加 custom_warehouse_address
+        pickupLocationType: item.pickup_location_type || '', // 添加 pickup_location_type
+        customPickupAccessorials: item.custom_pickup_accessorials
       };
     }
 

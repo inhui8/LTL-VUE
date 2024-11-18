@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-table :data="groupedTableData" style="width: 100%" border height="450">
-      <el-table-column label="删除" width="100">
+      <el-table-column label="删除/delete" width="100">
         <template #default="scope">
           <el-button 
             type="danger" 
@@ -11,7 +11,22 @@
           </el-button>
         </template>
       </el-table-column>
-
+      <!-- Add the column for the quote button -->
+      <el-table-column 
+        label="查看报价/check quote" 
+        :width="customWidths.viewQuote"
+      >
+        <template #default="scope">
+          <el-button 
+            @click="$emit('show-quote', scope.row)"
+            type="primary"    
+            size="default"  
+            class="view-quote-button" 
+          >
+            查看报价
+          </el-button>
+        </template>
+      </el-table-column>
       <el-table-column prop="shipmentId" label="Shipment ID/货件编号" :width="customWidths.shipmentId" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="so_number" label="SO/货件编号" :width="customWidths.so_number" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="accessorials" label="Accessorials/附加服务" :width="customWidths.accessorials" show-overflow-tooltip :resizable="true"></el-table-column>
@@ -48,6 +63,22 @@
       <el-table-column prop="location_type" label="Location Type/位置类型" :width="customWidths.location_type" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="has_pallet_jack_forklift" label="Has Pallet Jack and Forklift/是否有托盘搬运车和叉车" :width="customWidths.has_pallet_jack_forklift" show-overflow-tooltip :resizable="true"></el-table-column>
       <el-table-column prop="shipment_service_type" label="Shipment Service Type/货运服务类型" :width="customWidths.shipment_service_type" show-overflow-tooltip :resizable="true"></el-table-column>
+      <el-table-column label="Pick up Address/提货ZIP CODE" :width="customWidths.pickupAddress">
+        <template #default="scope">
+          <div>{{ scope.row.custom_warehouse_address || '-' }}</div>
+        </template>
+      </el-table-column>
+      
+      <!-- Custom Pick-up Location Type Field -->
+      <el-table-column label="Pick-up Location Type/提货位置类型" :width="customWidths.pickupLocationType">
+        <template #default="scope">
+          <div>{{ scope.row.pickup_location_type || '-' }}</div>
+        </template>
+      </el-table-column>
+      
+      <!-- Custom Pick-up Accessorials Field -->
+      <el-table-column prop="custom_pickup_accessorials" label="Accessorials/附加服务" :width="customWidths.accessorials" show-overflow-tooltip :resizable="true"></el-table-column>
+
       <!-- Daylight 列 -->
       <el-table-column prop="daylight" label="Daylight" :width="customWidths.daylight" show-overflow-tooltip :resizable="true">
         <template #default="scope">
@@ -74,6 +105,19 @@
           <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'customPrice') }">{{ scope.row.customPrice }}</div>
         </template>
       </el-table-column>
+      <el-table-column prop="xpo_price" label="XPO Price" :width="customWidths.xpo" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'xpo_price') }">{{ scope.row.xpo_price }}</div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="mothership_price" label="Mothership Price" :width="customWidths.mothership_price" show-overflow-tooltip :resizable="true">
+        <template #default="scope">
+          <div :style="{ backgroundColor: getLowestPriceStyle(scope.row, 'mothership_price') }">{{ scope.row.mothership_price }}</div>
+        </template>
+      </el-table-column>
+
+
+
       <el-table-column
         prop="priceConfirmed"
         label="Price Confirmed/价格确认"
@@ -92,6 +136,8 @@
             <el-option label="Flock Freight_Standard" value="Flock Freight_Standard"></el-option>
             <el-option label="Flock Freight_Direct" value="Flock Freight_Direct"></el-option>
             <el-option label="Custom Price" value="Custom Price"></el-option> <!-- Added customPrice option -->
+            <el-option label="XPO Price" value="XPO Price"></el-option> <!-- Added customPrice option -->
+            <el-option label="Mothership Price" value="Mothership Price"></el-option> 
           </el-select>
         </template>
       </el-table-column>
@@ -109,6 +155,7 @@
         </template>
       </el-table-column>
     </el-table>
+    
   </div>
 </template>
 
@@ -118,15 +165,15 @@ import { computed, defineProps, reactive } from 'vue'
 import { updateShipments } from '@/api/shipments/shipments'; // 使用你已有的更新方法
 import { ElMessage } from 'element-plus';
 
-// 更新价格确认状态
+// Update price method
 const updatePriceConfirmed = async (row) => {
   try {
     const shipments = {
-      id: row.shipmentId,  // 确保传递 shipment 的 ID
-      priceConfirmed: row.priceConfirmed  // 用户选择的价格确认
+      id: row.shipmentId,
+      priceConfirmed: row.priceConfirmed,
     };
 
-    // 调用后端API保存数据
+    // Call the API to save the data
     const response = await updateShipments(shipments);
     if (response.code === 200) {
       ElMessage.success('价格确认状态已更新');
@@ -138,6 +185,9 @@ const updatePriceConfirmed = async (row) => {
     console.error('更新价格确认状态时出错:', error);
   }
 };
+defineExpose({
+  updatePriceConfirmed,
+});
 // 辅助函数：格式化日期为yyyy-mm-dd
 const formatDate = (date) => {
   if (typeof date === 'number') {
@@ -180,14 +230,20 @@ const customWidths = reactive({
   location_type: 150,
   has_pallet_jack_forklift: 220,
   shipment_service_type: 200,
+  pickupAddress: 180,
+  pickupLocationType: 180,
+  pickupAccessorials: 250,
   daylight: 120,
   daylight_class: 150,
   auptix_class: 150,
   auptix_standard_inflexible: 220,
   auptix_flock_direct_inflexible: 250,
   priceConfirmed: 150, // 新增价格确认字段的宽度
-  customPrice: 150 // New field for customPrice
-
+  customPrice: 150, // New field for customPrice
+  xpo: 120, // Add the width for the new XPO column
+  mothership_price: 150,
+  viewQuote: 150,
+  default: 150
 })
 // Handle row deletion
 const deleteRow = (index) => {
@@ -201,14 +257,14 @@ const groupedTableData = computed(() => {
     const key = `${item.so_number}-${item.warehouse_location}`;
 
     if (!grouped[key]) {
-      // 初始化一个合并后的数据
+      // Initialize merged data for unique SO and warehouse location
       grouped[key] = {
-        shipmentId: item.shipmentId, // 新增 shipmentId 字段
+        shipmentId: item.shipmentId,
         so_number: item.so_number,
         warehouse_location: item.warehouse_location,
         accessorials: item.accessorials,
         delivery_zip: item.delivery_zip,
-        pick_up_date: formatDate(item.pick_up_date), // 格式化提货日期
+        pick_up_date: formatDate(item.pick_up_date),
         delivery_service_type: item.delivery_service_type,
         location_type: item.location_type,
         has_pallet_jack_forklift: item.has_pallet_jack_forklift,
@@ -216,31 +272,37 @@ const groupedTableData = computed(() => {
         daylight: item.daylight,
         auptix_standard_inflexible: item.auptix_standard_inflexible,
         auptix_flock_direct_inflexible: item.auptix_flock_direct_inflexible,
+        xpo_price: item.xpo_price,
+        mothership_price: item.mothership_price,
         mesurement: [],
         weight: [],
         pallets: [],
-        pcs: [], // Add pcs field
-        priceConfirmed: item.priceConfirmed, // 新增价格确认字段
-        customPrice: item.customPrice // Add customPrice field
+        pcs: [],
+        priceConfirmed: item.priceConfirmed,
+        customPrice: item.customPrice,
+        custom_warehouse_address: item.custom_warehouse_address || '',
+        pickup_location_type: item.pickup_location_type || '',
+        custom_pickup_accessorials: item.custom_pickup_accessorials || []
       };
     }
 
-    // 合并货物信息
+    // Merge cargo information
     grouped[key].mesurement.push(item.mesurement);
     grouped[key].weight.push(item.weight);
     grouped[key].pallets.push(item.pallets);
-    grouped[key].pcs.push(item.pcs); // Add pcs information to the group
+    grouped[key].pcs.push(item.pcs);
   });
 
-  // 将合并后的数据转换为数组格式，并将合并后的货物信息进行换行处理
+  // Convert merged data to array format and join cargo information with line breaks
   return Object.values(grouped).map(group => ({
     ...group,
     mesurement: group.mesurement.join('<br>'),
     weight: group.weight.join('<br>'),
     pallets: group.pallets.join('<br>'),
-    pcs: group.pcs.join('<br>') // Join pcs with line breaks
+    pcs: group.pcs.join('<br>')
   }));
 });
+
 
 // Helper function for background color
 const getLowestPriceStyle = (row, priceType) => {
@@ -249,7 +311,9 @@ const getLowestPriceStyle = (row, priceType) => {
     row.daylight === 'N/A' || row.daylight === null || row.daylight === undefined ? Infinity : Number(row.daylight),
     row.auptix_standard_inflexible === 'N/A' || row.auptix_standard_inflexible === null || row.auptix_standard_inflexible === undefined ? Infinity : Number(row.auptix_standard_inflexible),
     row.auptix_flock_direct_inflexible === 'N/A' || row.auptix_flock_direct_inflexible === null || row.auptix_flock_direct_inflexible === undefined ? Infinity : Number(row.auptix_flock_direct_inflexible),
-    row.customPrice === 'N/A' || row.customPrice === null || row.customPrice === undefined ? Infinity : Number(row.customPrice) // Include customPrice
+    row.customPrice === 'N/A' || row.customPrice === null || row.customPrice === undefined ? Infinity : Number(row.customPrice),
+    row.xpo === 'N/A' || row.xpo === null || row.xpo === undefined ? Infinity : Number(row.xpo), // Include XPO price
+    row.mothership_price === 'N/A' ? Infinity : Number(row.mothership_price)
   ];
 
   // Find the minimum price from the list
@@ -264,9 +328,6 @@ const getLowestPriceStyle = (row, priceType) => {
   }
   return ''; // Default return if the price is not the lowest
 };
-
-
-
 </script>
 
 <style scoped>

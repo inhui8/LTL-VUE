@@ -10,9 +10,52 @@
               <el-option label="LA盈仓" value="LA"></el-option>
               <el-option label="NJ盈仓" value="NJ"></el-option>
               <el-option label="SVG盈仓" value="SVG"></el-option>
+              <el-option label="Custom/自定义" value="custom"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
+        <!-- Custom Warehouse Address Field -->
+        <el-col v-if="formData.warehouse_location === 'custom'" :span="12">
+          <el-form-item label="Pick up Address/提货ZIP CODE" prop="custom_pickup_zip_code">
+            <el-input v-model="formData.custom_warehouse_address" placeholder="Enter custom warehouse ZIP CODE" clearable :style="{width: '100%'}"></el-input>
+          </el-form-item>
+        </el-col>
+
+        <el-col v-if="formData.warehouse_location === 'custom'" :span="12">
+          <el-form-item label="Pick-up Location Type/提货位置类型" prop="custom_pickup_location_type">
+            <el-select v-model="formData.pickup_location_type" placeholder="Select Pick-up Location Type" clearable :style="{width: '100%'}">
+              <el-option label="Business with Dock/有货台的商业地址" value="BUSINESS_DOCK"></el-option>
+              <el-option label="Business without Dock/无货台的商业地址" value="BUSINESS_NO_DOCK"></el-option>
+              <el-option label="Residential/住宅" value="RESIDENTIAL"></el-option>
+              <el-option label="Limited Access/有限进入权限" value="LIMITED_ACCESS"></el-option>
+              <el-option label="Trade Show/贸易展" value="TRADE_SHOW"></el-option>
+              <el-option label="Construction/建筑工地" value="CONSTRUCTION"></el-option>
+              <el-option label="Farm/农场" value="FARM"></el-option>
+              <el-option label="Airport/机场" value="AIRPORT"></el-option>
+              <el-option label="Church/教堂" value="CHURCH"></el-option>
+              <el-option label="Military Base/军事基地" value="MILITARY_BASE"></el-option>
+              <el-option label="Port/港口" value="PORT"></el-option>
+              <el-option label="School/学校" value="SCHOOL"></el-option>
+              <!-- Add more options as needed -->
+            </el-select>
+          </el-form-item>
+        </el-col>
+
+        <el-col v-if="formData.warehouse_location === 'custom'" :span="24" class="checkbox-group">
+          <el-form-item label="Pick-up Accessorials/提货附加服务" prop="custom_pickup_accessorials">
+            <el-checkbox-group v-model="formData.custom_pickup_accessorials">
+              <el-checkbox label="Inside Pickup">Inside Pickup/室内提货</el-checkbox>
+              <el-checkbox label="Limited Access or Constr Site Pickup">Limited Access or Constr Site Pickup/限制区域或建筑工地提货</el-checkbox>
+              <el-checkbox label="Construction-Utility-Mine or Rmt Pickup">Construction-Utility-Mine or Rmt Pickup/建筑工地或偏远地区提货</el-checkbox>
+              <el-checkbox label="Lift Gate Pickup">Lift Gate Pickup/升降门提货</el-checkbox>
+              <el-checkbox label="Overlength 8 ft but less than 12 ft">Overlength 8 ft but less than 12 ft/长度超过 243.84 cm 但小于 365.76 cm</el-checkbox>
+              <el-checkbox label="Overlength 12 ft but less than 20 ft">Overlength 12 ft but less than 20 ft/长度超过 365.76 cm 但小于 609.6 cm</el-checkbox>
+              <el-checkbox label="Overlength 20 ft or greater">Overlength 20 ft or greater/长度超过 609.6 cm 或更长</el-checkbox>
+              <el-checkbox label="Compliance Services Fee">Compliance Services Fee/合规服务费</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+        </el-col>
+
 
         <el-col :span="12">
           <el-form-item label="SO/货件编号" prop="so_number">
@@ -81,7 +124,7 @@
               <el-checkbox label="Inside Delivery" >Inside Delivery/室内配送</el-checkbox>
               <el-checkbox label="Limited Access or Constr Site Dlvry" >Limited Access or Constr Site Dlvry/限制区域或建筑工地配送</el-checkbox>
               <el-checkbox label="Construction-Utility-Mine or Rmt Del" >Construction-Utility-Mine or Rmt Del/建筑工地或偏远地区配送</el-checkbox>
-              <el-checkbox label="Lift Gate Delivery" >Lift Gate Delivery/尾板配送</el-checkbox>
+              <el-checkbox label="Lift Gate Delivery" >Lift Gate Delivery/升降门配送</el-checkbox>
               <el-checkbox label="Appointment Fee" >Appointment Fee/预约费</el-checkbox>
               <el-checkbox label="Overlength 8 ft but less than 12 ft" >Overlength 8 ft but less than 12 ft/长度超过 243.84 cm 但小于 365.76 cm</el-checkbox>
               <el-checkbox label="Overlength 12 ft but less than 20 ft" >Overlength 12 ft but less than 20 ft/长度超过 365.76 cm 但小于 609.6 cm</el-checkbox>
@@ -107,10 +150,66 @@
 
         <!-- 结果表格 -->
         <el-col :span="24">
-          <results-table :tableData="tableData"></results-table>
+          <results-table ref="resultsTableRef" :tableData="tableData" @show-quote="showQuoteDetails"></results-table>
         </el-col>
       </el-row>
     </el-form>
+    <el-dialog
+      title="报价详情"
+      v-model="quoteDialogVisible"
+      custom-class="custom-quote-dialog"
+      width="450px"
+      append-to-body
+      :style="{ boxShadow: '0 2px 12px rgba(0, 0, 0, 0.3)', borderRadius: '10px', padding: '20px' }"
+    >
+      <!-- Recommended Price Card -->
+      <div v-if="recommendedPrice.price !== 'N/A'" class="quote-cards-container">
+        <el-card 
+          class="quote-card recommended-card"
+          :class="{'selected-quote': selectedQuote === recommendedPrice.label}"
+          @click="selectQuote(recommendedPrice)"
+        >
+          <div slot="header">
+            <span>推荐价格: {{ recommendedPrice.label }}</span>
+          </div>
+          <p>报价: {{ recommendedPrice.price }}</p>
+        </el-card>
+      </div>
+
+      <!-- Scrollable container for other quotes -->
+      <div 
+        v-if="selectedQuoteDetails.length > 0" 
+        class="quote-cards-container" 
+        style="max-height: 500px; overflow-y: auto; padding-right: 10px;"
+      >
+        <el-card 
+          class="quote-card" 
+          v-for="(quote, index) in selectedQuoteDetails" 
+          :key="index" 
+          :class="{'selected-quote': selectedQuote === quote.label}"
+          @click="selectQuote(quote)"
+        >
+          <div slot="header">
+            <span>{{ quote.label }}</span>
+          </div>
+          <p>报价: {{ quote.price }}</p>
+        </el-card>
+      </div>
+
+      <div v-else>
+        <p>没有可显示的报价信息。</p>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="quoteDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="confirmSelectedQuote" :disabled="!selectedQuote">确认</el-button>
+      </span>
+    </el-dialog>
+
+
+
+
+
     <!-- 弹窗 -->
     <el-dialog title="上传和下载Excel模板" v-model="uploadDialogVisible" width="50%">
       <!-- 上传Excel -->
@@ -133,6 +232,21 @@
         <el-button @click="uploadDialogVisible = false">关闭</el-button>
       </span>
     </el-dialog>
+    <el-dialog
+        title="Mothership Prices"
+        v-model="mothershipDialogVisible"
+        width="500px"
+      >
+        <el-table :data="selectedMothershipPrices" style="width: 100%">
+          <el-table-column prop="provider" label="Provider"></el-table-column>
+          <el-table-column prop="serviceType" label="Service Type"></el-table-column>
+          <el-table-column prop="price" label="Price"></el-table-column>
+          <el-table-column prop="estimatedDeliveryDate" label="Estimated Delivery"></el-table-column>
+        </el-table>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="mothershipDialogVisible = false">关闭</el-button>
+        </span>
+      </el-dialog>
     <!-- 固定按钮在页面底部 -->
     <div class="fixed-buttons">
       <el-button type="primary" @click="submitForm">提交</el-button>
@@ -142,6 +256,7 @@
     </div>
         <!-- Add the custom footer at the end of the page -->
         <custom-footer></custom-footer>
+        
   </div>
 
 </template>
@@ -163,12 +278,86 @@ const openUploadDialog = () => {
   
   uploadDialogVisible.value = true
 }
+const mothershipDialogVisible = ref(false); // 控制弹窗的显示状态
+const selectedMothershipPrices = ref([]);   // 用于存储选择的Mothership报价信息
+
+const resultsTableRef = ref(null);
+const quoteDialogVisible = ref(false);
+const selectedQuoteDetails = ref([]);
+const selectedQuote = ref(null); // Track the selected quote
+const currentRow = ref(null); // Store the current row for updating
+const recommendedPrice = ref({ label: '', price: 'N/A' }); 
+// Method to show quote details
+const showQuoteDetails = (row) => {
+  selectedQuoteDetails.value = [
+    { label: 'Daylight', price: row.daylight || 'N/A' },
+    { label: 'Flock Freight Standard', price: row.auptix_standard_inflexible || 'N/A' },
+    { label: 'Flock Freight Direct', price: row.auptix_flock_direct_inflexible || 'N/A' },
+    { label: 'Custom Price', price: row.customPrice || 'N/A' },
+    { label: 'XPO Price', price: row.xpo_price || 'N/A' },
+    { label: 'Mothership Price', price: row.mothership_price || 'N/A' }
+  ];
+  
+  // Handle Mothership prices if multiple prices are returned
+  if (Array.isArray(row.mothershipPrices)) {
+    selectedMothershipPrices.value = row.mothershipPrices; // Store multiple Mothership prices for display
+    mothershipDialogVisible.value = true;
+  } else if (row.mothership_price) {
+    selectedQuoteDetails.value.push({ label: 'Mothership Price', price: row.mothership_price });
+  }
+
+  currentRow.value = row;
+  selectedQuote.value = null;
+  calculateRecommendedPrice(row);
+  quoteDialogVisible.value = true;
+};
+
+// Method to select a quote
+const selectQuote = (quote) => {
+  selectedQuote.value = quote.label; // Track the selected quote label
+};
+// Method to calculate the recommended (lowest) price
+const calculateRecommendedPrice = (row) => {
+  const prices = [
+    { label: 'Daylight', price: row.daylight },
+    { label: 'Flock Freight Standard', price: row.auptix_standard_inflexible },
+    { label: 'Flock Freight Direct', price: row.auptix_flock_direct_inflexible },
+    { label: 'Custom Price', price: row.customPrice },
+    { label: 'XPO Price', price: row.xpo_price },
+    { label: 'Mothership Price', price: row.mothership_price }
+  ];
+
+  const validPrices = prices.filter(item => item.price !== 'N/A' && item.price !== null && item.price !== undefined);
+  if (validPrices.length > 0) {
+    const lowest = validPrices.reduce((min, current) => (Number(current.price) < Number(min.price) ? current : min));
+    recommendedPrice.value = lowest;
+  } else {
+    recommendedPrice.value = { label: '', price: 'N/A' };
+  }
+};
 
 
+// Method to confirm the selected quote
+const confirmSelectedQuote = () => {
+  if (currentRow.value && selectedQuote.value) {
+    // Update the priceConfirmed field in the table row
+    currentRow.value.priceConfirmed = selectedQuote.value;
+    
+    // Optionally, call an API to save the change in the backend
+    if (resultsTableRef.value) {
+      resultsTableRef.value.updatePriceConfirmed(currentRow.value);
+    }
+
+    quoteDialogVisible.value = false; // Close the dialog
+  }
+};
 // 初始化表单数据
 const formRef = ref(null)
 const formData = reactive({
   warehouse_location: '',
+  custom_warehouse_address: '', // Add custom warehouse address
+  pickup_location_type: '',     // Add custom pickup location type
+  custom_pickup_accessorials: [],
   so_number: '',
   delivery_zip: '',
   pick_up_date: '',
@@ -216,17 +405,18 @@ function formatDate(date) {
 const tableData = ref([]) // 用于显示结果表格的数据
 
 const submitForm = async () => {
+  console.log('Submitting formData:', formData);
   loading.value = true;
-  
-  // 遍历所有表格数据，转换日期格式
+
+  // Convert all dates in tableData to the proper format
   tableData.value = tableData.value.map(row => {
     return {
       ...row,
-      pick_up_date: formatDate(row.pick_up_date)  // 处理日期格式
+      pick_up_date: formatDate(row.pick_up_date)  // Format the date
     };
   });
 
-  // 提交表单逻辑
+  // Validate the table data
   if (tableData.value.length === 0) {
     ElMessage({
       message: '表格中没有数据，无法提交',
@@ -260,30 +450,20 @@ const submitForm = async () => {
         const row = tableData.value[index1];
         const responseItem = response.data[index2];
 
-        // 处理 Daylight API 的响应
+        // Handle Daylight API response
         const daylightResponse = responseItem.DaylightApiResponse;
-        if (daylightResponse && daylightResponse.startsWith("Error")) {
-          ElMessage({
-            message: `Daylight API 错误: ${daylightResponse}`,
-            type: 'error',
-            duration: 5000
-          });
-          row.daylight = 'N/A';
-        } else if (daylightResponse) {
-          row.daylight = daylightResponse;
-        } else {
-          row.daylight = 'N/A';
-        }
+        row.daylight = daylightResponse && !daylightResponse.startsWith("Error") ? daylightResponse : 'N/A';
 
-        // 处理 SO 编号
+        // Handle SO number
         const responseSoNumber = String(responseItem['So_Number:']).trim();
         const tableSoNumber = String(row.so_number).trim();
         const shipmentId = responseItem.shipmentId;
 
-        // 如果 SO 编号匹配，处理 Auptix 和 CustomCo 的响应
+        // If SO number matches, handle other responses
         if (tableSoNumber === responseSoNumber) {
           row.shipmentId = shipmentId;
 
+          // Handle Auptix API response
           const auptixResponse = responseItem.auptixApiResponse;
           if (auptixResponse && auptixResponse.startsWith("Error")) {
             ElMessage({
@@ -299,19 +479,28 @@ const submitForm = async () => {
             row.auptix_flock_direct_inflexible = flockDirectPrice || 'N/A';
           }
 
-          // 处理 customPrice 的响应
-          const customPriceResponse = responseItem.customPriceApiResponse;
-          if (customPriceResponse && customPriceResponse.startsWith("Error")) {
-            ElMessage({
-              message: `CustomCo API 错误: ${customPriceResponse}`,
-              type: 'error',
-              duration: 5000
-            });
-            row.customPrice = 'N/A';
-          } else if (customPriceResponse) {
-            row.customPrice = customPriceResponse;
+          // Handle customPrice response
+          row.customPrice = responseItem.customPriceApiResponse && !responseItem.customPriceApiResponse.startsWith("Error")
+            ? responseItem.customPriceApiResponse
+            : 'N/A';
+
+          // Handle XPO price response
+          row.xpo_price = responseItem.XPOResponse && !responseItem.XPOResponse.startsWith("Error")
+            ? responseItem.XPOResponse
+            : 'N/A';
+
+          // Handle Mothership API response for the lowest price
+          const mothershipResponse = responseItem.mothershipResponse;
+          if (mothershipResponse && mothershipResponse.startsWith("Mothership Quote Price:")) {
+            // Extract the price from the response message
+            const priceMatch = mothershipResponse.match(/Mothership Quote Price: (\d+(\.\d+)?)/);
+            if (priceMatch && priceMatch[1]) {
+              row.mothership_price = parseFloat(priceMatch[1]);
+            } else {
+              row.mothership_price = 'N/A';
+            }
           } else {
-            row.customPrice = 'N/A';
+            row.mothership_price = 'N/A';
           }
 
           index1++;
@@ -322,7 +511,7 @@ const submitForm = async () => {
       }
     }
 
-    // 标记已报价的数据
+    // Mark the data as quoted
     unquotedData.forEach(row => {
       row.isQuoted = true;
     });
@@ -331,7 +520,6 @@ const submitForm = async () => {
       type: 'success',
       duration: 5000
     });
-
   } catch (error) {
     console.error('提交表单时出错:', error);
 
@@ -439,16 +627,20 @@ const addToTable = () => {
         location_type: formData.location_type,
         has_pallet_jack_forklift: formData.has_pallet_jack_forklift,
         shipment_service_type: formData.shipment_service_type,
+        custom_warehouse_address: formData.custom_warehouse_address, // Save the address
+        pickup_location_type: formData.pickup_location_type, // Save pickup type
+        custom_pickup_accessorials: formData.custom_pickup_accessorials.join(', '), 
         accessorials: formData.field116.join(', '),
         pallets: item.pallets,
         weight: item.weight,
         pcs: item.pcs, // Add pcs field
         mesurement: `${item.length}*${item.width}*${item.height}`, // Generate Measurement field
-        customPrice: formData.customPrice || '', // Add customPrice field
         isQuoted: false  // Default to not quoted
       }));
 
       // Push new data into the table
+      console.log(tableData.value);
+
       tableData.value.push(...cargoItemsWithMeasurement);
       ElMessage.success('数据已成功添加到表格');
     } else {
@@ -484,6 +676,8 @@ const downloadResults = () => {
     "Auptix Standard Inflexible Price": row.auptix_standard_inflexible,
     "Auptix Flock Direct Inflexible Price": row.auptix_flock_direct_inflexible,
     "Custom Price": row.customPrice, // Add customPrice to the download
+    "XPO Price": row.xpo_price, // Add xpo_price to the download
+    "Mothership Price": row.mothership_price
   }));
 
   // Convert data to Excel format and download
@@ -591,6 +785,38 @@ h1 {
 .fixed-buttons .el-button {
   margin: 0 15px;
 }
+.container {
+  width: 80%;
+  max-width: 1800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
 
+/* Add styles for the quote cards */
+.quote-card {
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 10px;
+  margin: 20px;
+}
+
+.quote-card:hover {
+  border-color: #409EFF;
+  transform: scale(1.05);
+}
+
+/* Style for the selected quote */
+.selected-quote {
+  border: 2px solid #409EFF;
+}
+
+/* Style for the recommended price card */
+.recommended-card {
+  border: 2px solid #67C23A;
+  background-color: #f0f9eb;
+}
 </style>
 
