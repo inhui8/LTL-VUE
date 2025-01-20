@@ -56,6 +56,15 @@
         <option value="卡板">卡板</option>
       </select>
     </div>
+        <!-- 装柜类型选择 -->
+    <div class="form-group">
+      <label for="loadType">装柜类型：<span class="required">*</span></label>
+      <select v-model="loadType">
+        <option disabled value="">请选择装柜类型</option>
+        <option value="liveload">Liveload</option>
+        <option value="drop">Drop</option>
+      </select>
+    </div>
 
     <!-- 提交预约按钮：根据isSubmitVisible计算属性动态控制 -->
     <button @click="handleSubmit" class="btn-submit" :disabled="!isSubmitVisible">提交预约</button>
@@ -90,7 +99,7 @@ export default {
   methods: {
     getTodayDate() {
       const today = new Date();
-      today.setDate(today.getDate() + 1);
+      today.setDate(today.getDate());
       today.setHours(0, 0, 0, 0);
       return today.toISOString().split('T')[0];
     },
@@ -127,7 +136,7 @@ export default {
 
     async handleSubmit() {
       if (!this.pcNumber || !this.supplierName || !this.appointmentDate || 
-          !this.appointmentTime || !this.driverPhone || !this.cargoType) {
+          !this.appointmentTime || !this.driverPhone || !this.cargoType || !this.loadType) {
         this.$message.error('请填写所有必填项。');
         return;
       }
@@ -161,7 +170,8 @@ export default {
         appointmentDate: this.appointmentDate,
         appointmentTime: this.appointmentTime,
         driverPhone: this.driverPhone,
-        cargoType: this.cargoType
+        cargoType: this.cargoType,
+        loadType: this.loadType
       };
 
       try {

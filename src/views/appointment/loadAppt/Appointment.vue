@@ -45,6 +45,14 @@
               <option value="卡板">卡板</option>
             </select>
           </div>
+          <div class="form-group">
+            <label for="loadType">装柜类型：<span class="required">*</span></label>
+            <select v-model="loadType" required>
+              <option disabled value="">请选择装柜类型</option>
+              <option value="liveload">Liveload</option>
+              <option value="drop">Drop</option>
+            </select>
+          </div>
   
           <div class="form-actions">
             <button class="btn-save" @click="editMode ? handleUpdate() : handleSave()">保存</button>
@@ -105,6 +113,7 @@
         appointmentTime: '',
         driverPhone: '',
         cargoType: '',
+        loadType: '',
         clickedDate: '',
         selectedEvent: null,
         editMode: false,
@@ -131,6 +140,7 @@
               supplierName: event.supplierName,
               driverPhone: event.driverPhone,
               cargoType: event.cargoType,
+              loadType: event.loadType,
               appointmentTime: event.appointmentTime
             }
           })) : [];
@@ -153,6 +163,7 @@
         this.appointmentTime = this.selectedEvent.extendedProps.appointmentTime;
         this.driverPhone = this.selectedEvent.extendedProps.driverPhone;
         this.cargoType = this.selectedEvent.extendedProps.cargoType;
+        this.loadType = this.selectedEvent.extendedProps.loadType;
         this.editMode = true;
         this.showModal = true;
       },
@@ -174,7 +185,8 @@
         appointmentDate,
         appointmentTime,
         driverPhone: event.extendedProps.driverPhone,
-        cargoType: event.extendedProps.cargoType
+        cargoType: event.extendedProps.cargoType,
+        loadType: event.extendedProps.loadType 
         };
 
         try {
@@ -192,7 +204,8 @@
           this.appointmentDate &&
           this.appointmentTime &&
           this.driverPhone &&
-          this.cargoType
+          this.cargoType &&
+          this.loadType
         );
       },
       async handleSave() {
@@ -206,7 +219,8 @@
           appointmentDate: this.appointmentDate,
           appointmentTime: this.appointmentTime,
           driverPhone: this.driverPhone,
-          cargoType: this.cargoType
+          cargoType: this.cargoType,
+          loadType: this.loadType
         };
         try {
           await submitAppointment(newAppointment);
@@ -227,7 +241,8 @@
           appointmentDate: this.appointmentDate,
           appointmentTime: this.appointmentTime,
           driverPhone: this.driverPhone,
-          cargoType: this.cargoType
+          cargoType: this.cargoType,
+          loadType: this.loadType
         };
         try {
           await updateAppointment(this.selectedEvent.id, updatedAppointment);
@@ -257,11 +272,12 @@
         this.appointmentTime = '';
         this.driverPhone = '';
         this.cargoType = '';
+        this.loadType = '';
         this.selectedEvent = null;
         this.editMode = false;
       },
       renderEventContent(arg) {
-        const { pcNumber, supplierName, driverPhone, cargoType } = arg.event.extendedProps;
+        const { pcNumber, supplierName, driverPhone, cargoType , loadType} = arg.event.extendedProps;
         return {
           html: `
             <div class="fc-event-custom-content">
@@ -269,6 +285,7 @@
               <span>供应商: ${supplierName}</span><br>
               <span>司机电话: ${driverPhone}</span><br>
               <span>货物类型: ${cargoType}</span>
+              <span>装柜类型: ${loadType}</span>
             </div>
           `
         };

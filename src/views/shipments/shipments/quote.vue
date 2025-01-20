@@ -10,6 +10,12 @@
               <el-option label="LA盈仓" value="LA"></el-option>
               <el-option label="NJ盈仓" value="NJ"></el-option>
               <el-option label="SVG盈仓" value="SVG"></el-option>
+              <el-option label="Dallas盈仓" value="DAL"></el-option>
+              <el-option label="西雅图代理仓" value="Seattle"></el-option>
+              <el-option label="芝加哥代理仓" value="Chicago"></el-option>
+              <el-option label="休斯顿代理仓" value="Houston"></el-option>
+              <el-option label="FL代理仓" value="Miami"></el-option>
+              <el-option label="加州代理仓" value="Hayward"></el-option>
               <el-option label="Custom/自定义" value="custom"></el-option>
             </el-select>
           </el-form-item>
@@ -297,14 +303,6 @@ const showQuoteDetails = (row) => {
     { label: 'XPO Price', price: row.xpo_price || 'N/A' },
     { label: 'Mothership Price', price: row.mothership_price || 'N/A' }
   ];
-  
-  // Handle Mothership prices if multiple prices are returned
-  if (Array.isArray(row.mothershipPrices)) {
-    selectedMothershipPrices.value = row.mothershipPrices; // Store multiple Mothership prices for display
-    mothershipDialogVisible.value = true;
-  } else if (row.mothership_price) {
-    selectedQuoteDetails.value.push({ label: 'Mothership Price', price: row.mothership_price });
-  }
 
   currentRow.value = row;
   selectedQuote.value = null;
@@ -463,22 +461,13 @@ const submitForm = async () => {
         if (tableSoNumber === responseSoNumber) {
           row.shipmentId = shipmentId;
 
-          // Handle Auptix API response
-          const auptixResponse = responseItem.auptixApiResponse;
-          if (auptixResponse && auptixResponse.startsWith("Error")) {
-            ElMessage({
-              message: `Auptix API 错误: ${auptixResponse}`,
-              type: 'error',
-              duration: 5000
-            });
-            row.auptix_standard_inflexible = 'N/A';
-            row.auptix_flock_direct_inflexible = 'N/A';
-          } else if (auptixResponse) {
-            const { standardPrice, flockDirectPrice } = extractAuptixPrices(auptixResponse);
-            row.auptix_standard_inflexible = standardPrice || 'N/A';
-            row.auptix_flock_direct_inflexible = flockDirectPrice || 'N/A';
-          }
 
+          row.auptix_flock_direct_inflexible = responseItem.auptixFlockDirectResponse && !responseItem.auptixFlockDirectResponse.startsWith("Error")
+            ? responseItem.auptixFlockDirectResponse
+            : 'N/A';
+          row.auptix_standard_inflexible = responseItem.auptixFlockResponse && !responseItem.auptixFlockResponse.startsWith("Error")
+            ? responseItem.auptixFlockResponse
+            : 'N/A';
           // Handle customPrice response
           row.customPrice = responseItem.customPriceApiResponse && !responseItem.customPriceApiResponse.startsWith("Error")
             ? responseItem.customPriceApiResponse
@@ -488,20 +477,10 @@ const submitForm = async () => {
           row.xpo_price = responseItem.XPOResponse && !responseItem.XPOResponse.startsWith("Error")
             ? responseItem.XPOResponse
             : 'N/A';
+          row.mothership_price = responseItem.mothershipResponse && !responseItem.mothershipResponse.startsWith("Error")
+            ? responseItem.mothershipResponse
+            : 'N/A';
 
-          // Handle Mothership API response for the lowest price
-          const mothershipResponse = responseItem.mothershipResponse;
-          if (mothershipResponse && mothershipResponse.startsWith("Mothership Quote Price:")) {
-            // Extract the price from the response message
-            const priceMatch = mothershipResponse.match(/Mothership Quote Price: (\d+(\.\d+)?)/);
-            if (priceMatch && priceMatch[1]) {
-              row.mothership_price = parseFloat(priceMatch[1]);
-            } else {
-              row.mothership_price = 'N/A';
-            }
-          } else {
-            row.mothership_price = 'N/A';
-          }
 
           index1++;
           index2++;

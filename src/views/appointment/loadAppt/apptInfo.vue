@@ -2,8 +2,20 @@
   <div class="appointment-form">
     <h2>预约设置</h2>
 
-    <!-- 日期选择器 -->
+    <!-- 批量日期选择器 -->
     <div class="form-group">
+      <label for="batchStartDate">批量设置开始日期：</label>
+      <input type="date" v-model="batchStartDate" />
+      <label for="batchEndDate">批量设置结束日期：</label>
+      <input type="date" v-model="batchEndDate" />
+      <Br></Br>
+      <Br></Br>
+      <button @click="enableBatchMode">启用批量设置</button>
+      <button @click="disableBatchMode" v-if="isBatchMode">取消批量设置</button>
+    </div>
+
+    <!-- 日期选择器 -->
+    <div class="form-group" v-if="!isBatchMode">
       <label for="appointmentDate">选择日期：</label>
       <input type="date" v-model="appointmentDate" @change="loadSettings" />
     </div>
@@ -52,6 +64,9 @@ export default {
   data() {
     return {
       appointmentDate: '',
+      batchStartDate: '',
+      batchEndDate: '',
+      isBatchMode: false,
       timeSlots: [
         '08:00', '09:00', '10:00', '11:00', '12:00',
         '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
@@ -66,6 +81,16 @@ export default {
     });
   },
   methods: {
+    enableBatchMode() {
+      if (this.batchStartDate && this.batchEndDate) {
+        this.isBatchMode = true;
+      } else {
+        alert('请先选择批量设置的开始日期和结束日期！');
+      }
+    },
+    disableBatchMode() {
+      this.isBatchMode = false;
+    },
     async loadSettings() {
       try {
         const response = await getAppointmentSettings(this.appointmentDate);
@@ -86,17 +111,47 @@ export default {
       }
     },
     async saveSettings() {
-      const maxAppointmentsArray = Object.keys(this.maxAppointments).map(timeSlot => ({
-        appointmentDate: this.appointmentDate,
-        timeSlot: timeSlot,
-        palletMaxAppointments: this.maxAppointments[timeSlot].pallet || 0,
-        floorMaxAppointments: this.maxAppointments[timeSlot].floor || 0,
-        isOpen: this.isOpen
-      }));
+      const settings = [];
+
+      if (this.isBatchMode) {
+        const startDate = new Date(this.batchStartDate);
+        const endDate = new Date(this.batchEndDate);
+
+        if (startDate > endDate) {
+          alert('开始日期不能晚于结束日期！');
+          return;
+        }
+
+        let currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          const formattedDate = currentDate.toISOString().split('T')[0];
+          Object.keys(this.maxAppointments).forEach(timeSlot => {
+            settings.push({
+              appointmentDate: formattedDate,
+              timeSlot: timeSlot,
+              palletMaxAppointments: this.maxAppointments[timeSlot].pallet || 0,
+              floorMaxAppointments: this.maxAppointments[timeSlot].floor || 0,
+              isOpen: this.isOpen
+            });
+          });
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      } else {
+        Object.keys(this.maxAppointments).forEach(timeSlot => {
+          settings.push({
+            appointmentDate: this.appointmentDate,
+            timeSlot: timeSlot,
+            palletMaxAppointments: this.maxAppointments[timeSlot].pallet || 0,
+            floorMaxAppointments: this.maxAppointments[timeSlot].floor || 0,
+            isOpen: this.isOpen
+          });
+        });
+      }
 
       try {
-        await saveAppointmentSettings(maxAppointmentsArray);
+        await saveAppointmentSettings(settings);
         alert('设置已保存！');
+        if (this.isBatchMode) this.disableBatchMode();
       } catch (error) {
         console.error('保存设置时出错：', error);
       }
@@ -157,7 +212,7 @@ export default {
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  max-width: 80px; /* 限制输入框宽度 */
+  max-width: 80px;
 }
 
 button {

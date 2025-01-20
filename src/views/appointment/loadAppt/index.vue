@@ -59,6 +59,13 @@
           placeholder="请选择刷新时间">
         </el-date-picker>
       </el-form-item>
+      <el-form-item label="装柜类型" prop="loadType">
+        <el-select v-model="queryParams.loadType" placeholder="请选择装柜类型" clearable>
+          <el-option label="Liveload" value="liveload"></el-option>
+          <el-option label="Drop" value="drop"></el-option>
+        </el-select>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -122,6 +129,13 @@
       </el-table-column>
       <el-table-column label="司机电话" align="center" prop="driverPhone" />
       <el-table-column label="货物类型" align="center" prop="cargoType" />
+      <el-table-column label="装柜类型" align="center" prop="loadType">
+        <template #default="scope">
+          <span>{{ scope.row.loadType }}</span>
+        </template>
+      </el-table-column>
+
+
       <el-table-column label="创建时间" align="center" prop="createdAt" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createdAt, '{y}-{m}-{d}') }}</span>
@@ -176,6 +190,13 @@
         <el-form-item label="司机电话" prop="driverPhone">
           <el-input v-model="form.driverPhone" placeholder="请输入司机电话" />
         </el-form-item>
+        <el-form-item label="装柜类型" prop="loadType">
+          <el-select v-model="form.loadType" placeholder="请选择装柜类型" clearable>
+            <el-option label="Liveload" value="liveload"></el-option>
+            <el-option label="Drop" value="drop"></el-option>
+          </el-select>
+        </el-form-item>
+
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -213,6 +234,7 @@ const data = reactive({
     appointmentTime: null,
     driverPhone: null,
     cargoType: null,
+    loadType: null,
     createdAt: null,
     updatedAt: null
   },
@@ -222,7 +244,8 @@ const data = reactive({
     appointmentDate: [{ required: true, message: "预约日期不能为空", trigger: "blur" }],
     appointmentTime: [{ required: true, message: "预约时间不能为空", trigger: "blur" }],
     driverPhone: [{ required: true, message: "司机电话不能为空", trigger: "blur" }],
-    cargoType: [{ required: true, message: "货物类型不能为空", trigger: "change" }]
+    cargoType: [{ required: true, message: "货物类型不能为空", trigger: "change" }],
+    loadType: [{ required: true, message: "装柜类型不能为空", trigger: "change" }]
   }
 });
 
@@ -233,6 +256,7 @@ function getList() {
   loading.value = true;
   queryParams.value.params = {};
   listLoadAppt(queryParams.value).then(response => {
+    console.log(response.rows);
     loadApptList.value = response.rows;
     total.value = response.total;
     loading.value = false;

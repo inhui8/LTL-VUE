@@ -315,7 +315,7 @@ const getLowestPriceStyle = (row, priceType) => {
     row.xpo === 'N/A' || row.xpo === null || row.xpo === undefined ? Infinity : Number(row.xpo), // Include XPO price
     row.mothership_price === 'N/A' ? Infinity : Number(row.mothership_price)
   ];
-
+  
   // Find the minimum price from the list
   const lowestPrice = Math.min(...prices);
   // If all prices are Infinity, there is no valid price to compare
