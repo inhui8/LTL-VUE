@@ -30,12 +30,14 @@ export default defineConfig(({ mode, command }) => {
       open: true,
       proxy: {
     //     '/dev-api': {
-    //       target: 'http://35.82.110.177:8080',
+    //       // target: 'http://35.82.110.177:8080',
+    //       target: 'http://localhost:8081',
     //       changeOrigin: true,
     //       rewrite: (p) => p.replace(/^\/dev-api/, '')
     //     },
     //     '/prod-api': {
-    //       target: 'http://35.82.110.177:8080',
+    //       // target: 'http://35.82.110.177:8080',
+    //       target: 'http://localhost:8081',
     //       changeOrigin: true,
     //       rewrite: (p) => p.replace(/^\/prod-api/, '')
     //     }

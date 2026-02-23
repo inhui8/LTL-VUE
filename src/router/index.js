@@ -166,7 +166,8 @@ export const dynamicRoutes = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
-  }
+  },
+  
 ]
 
 const router = createRouter({

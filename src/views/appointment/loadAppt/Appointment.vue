@@ -10,45 +10,45 @@
           <h2 v-else>创建预约信息</h2>
   
           <div class="form-group">
-            <label for="pcNumber">PC号:<span class="required">*</span></label>
-            <input type="text" v-model="pcNumber" placeholder="输入PC号" required />
+            <label for="pcNumber">PC号/PC Number:<span class="required">*</span></label>
+            <input type="text" v-model="pcNumber" placeholder="输入PC号/PC Number" required />
           </div>
   
           <div class="form-group">
-            <label for="supplierName">供应商名称：<span class="required">*</span></label>
-            <input type="text" v-model="supplierName" placeholder="输入供应商名称" required />
+            <label for="supplierName">供应商名称/Vendor Name：<span class="required">*</span></label>
+            <input type="text" v-model="supplierName" placeholder="输入供应商名称/Vendor Name" required />
           </div>
   
           <div class="form-group">
-            <label for="appointmentDate">预约日期：<span class="required">*</span></label>
+            <label for="appointmentDate">预约日期/appointment date：<span class="required">*</span></label>
             <input type="date" v-model="appointmentDate" required />
           </div>
   
           <div class="form-group">
-            <label for="appointmentTime">预约时间段：<span class="required">*</span></label>
+            <label for="appointmentTime">预约时间段/appointment time：<span class="required">*</span></label>
             <select v-model="appointmentTime" required>
-              <option disabled value="">请选择时间</option>
+              <option disabled value="">请选择时间/Please select time</option>
               <option v-for="time in availableTimeSlots" :key="time" :value="time">{{ time }}</option>
             </select>
           </div>
   
           <div class="form-group">
-            <label for="driverPhone">司机电话：<span class="required">*</span></label>
-            <input type="tel" v-model="driverPhone" placeholder="输入司机电话" required />
+            <label for="driverPhone">司机电话/Driver Phone Number<span class="required">*</span></label>
+            <input type="tel" v-model="driverPhone" placeholder="输入司机电话/Driver Phone Number" required />
           </div>
   
           <div class="form-group">
-            <label for="cargoType">货物类型：<span class="required">*</span></label>
+            <label for="cargoType">货物类型/Cargo Type：<span class="required">*</span></label>
             <select v-model="cargoType" required>
-              <option disabled value="">请选择货物类型</option>
-              <option value="地板">地板</option>
-              <option value="卡板">卡板</option>
+              <option disabled value="">请选择货物类型/Cargo Type</option>
+              <option value="地板">地板/floor</option>
+              <option value="卡板">卡板/pallet</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="loadType">装柜类型：<span class="required">*</span></label>
+            <label for="loadType">装柜类型/load type：<span class="required">*</span></label>
             <select v-model="loadType" required>
-              <option disabled value="">请选择装柜类型</option>
+              <option disabled value="">请选择装柜类型/Select load type</option>
               <option value="liveload">Liveload</option>
               <option value="drop">Drop</option>
             </select>
@@ -118,7 +118,7 @@
         selectedEvent: null,
         editMode: false,
         availableTimeSlots: [
-          '08:00:00', '09:00:00', '10:00:00', '11:00:00', '12:00:00', 
+          '00:00:00', '01:00:00', '02:00:00', '03:00:00', '04:00:00', '05:00:00', '06:00:00', '07:00:00', '08:00:00', '09:00:00', '10:00:00', '11:00:00', '12:00:00', 
           '13:00:00', '14:00:00', '15:00:00', '16:00:00', '17:00:00', '18:00:00', '19:00:00','20:00:00','21:00:00','22:00:00','23:00:00'
         ]
       };

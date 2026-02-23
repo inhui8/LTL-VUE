@@ -1,6 +1,14 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="报价ID" prop="id">
+        <el-input
+          v-model="queryParams.id"
+          placeholder="请输入报价ID"
+          clearable
+          @keyup.enter="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="SO" prop="soNumber">
         <el-input
           v-model="queryParams.soNumber"
@@ -10,15 +18,13 @@
         />
       </el-form-item>
       <el-form-item label="仓库地址" prop="warehouseLocation">
-        <el-select v-model="queryParams.warehouseLocation" placeholder="请选择仓库地址" clearable>
-          <el-option
-            v-for="dict in warehouse_location"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.label"
-          />
-        </el-select>
+        <el-input
+          v-model="queryParams.warehouseLocation"
+          placeholder="请输入仓库地址"
+          clearable
+        />
       </el-form-item>
+
       <el-form-item label="提货时间" prop="pickUpDate">
         <el-date-picker clearable
           v-model="queryParams.pickUpDate"
@@ -164,6 +170,7 @@
         <el-checkbox label="priceConfirmed">价格确认</el-checkbox>
         <el-checkbox label="soNumber">SO</el-checkbox>
         <el-checkbox label="warehouseLocation">仓库地址</el-checkbox>
+        <el-checkbox label="customWarehouseAddress">自定义的zip_code</el-checkbox>
         <el-checkbox label="pickUpDate">提货时间</el-checkbox>
         <el-checkbox label="deliveryZip">送货ZIP</el-checkbox>
         <el-checkbox label="deliveryServiceType">送货类型</el-checkbox>
@@ -206,6 +213,8 @@
           <dict-tag :options="warehouse_location" :value="scope.row.warehouseLocation"/>
         </template> -->
       </el-table-column>
+      <el-table-column v-if="visibleColumns.customWarehouseAddress" label="自定义提货zip" align="center" prop="customWarehouseAddress" />
+
       <el-table-column v-if="visibleColumns.pickUpDate" label="提货时间" align="center" prop="pickUpDate" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.pickUpDate, '{y}-{m}-{d}') }}</span>
@@ -489,6 +498,7 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
+    id: null,
     soNumber: null,
     warehouseLocation: null,
     pickUpDate: null,
@@ -607,7 +617,7 @@ function convertAccNameToLabels(accName) {
 }
 // 控制列显示的 keys 和 columns
 const visibleColumnsKeys = ref([
-  'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'pickUpDate', 'deliveryZip',
+  'id', 'priceConfirmed', 'soNumber', 'warehouseLocation', 'customWarehouseAddress','pickUpDate', 'deliveryZip',
   'deliveryServiceType', 'locationType', 'shipmentServiceType', 'consigneeNumber', 'consigneeName',
   'streetAddress', 'city', 'state', 'accName', 'createdAt', 'daylightPrice',
   'flockfreightStandardPrice', 'flockfreightFlockDirectPrice', 'hasPalletJackForklift', 'customPrice', 'xpoPrice','mothershipPrice',
@@ -672,6 +682,7 @@ function handleQuery() {
 /** 重置按钮操作 */
 function resetQuery() {
   proxy.resetForm("queryRef");
+  queryParams.value.id = null;
   handleQuery();
 }
 

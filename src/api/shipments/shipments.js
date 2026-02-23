@@ -111,4 +111,88 @@ export function getApiSelection(id) {
     params: { id }  // 传递配置的 ID
   });
 }
+// 查询仓库列表
+export function listWarehouses(query) {
+  return request({
+    url: '/shipments/warehouse/list',
+    method: 'get',
+    params: query
+  })
+}
 
+// 查询仓库详细信息
+export function getWarehouse(id) {
+  return request({
+    url: `/shipments/warehouse/${id}`,
+    method: 'get'
+  })
+}
+
+// 新增仓库
+export function addWarehouse(data) {
+  return request({
+    url: '/shipments/warehouse/add',
+    method: 'post',
+    data
+  })
+}
+
+// 更新仓库信息
+export function updateWarehouse(data) {
+  return request({
+    url: '/shipments/warehouse/update',
+    method: 'put',
+    data
+  })
+}
+
+// 删除仓库（支持批量）
+export function deleteWarehouse(ids) {
+  return request({
+    url: `/shipments/warehouse/delete/${ids}`,
+    method: 'delete'
+  })
+}
+
+// 查询warehouseInfo列表
+export function listShipment(query) {
+  return request({
+    url: '/shipments/warehouse/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 查询warehouseInfo详细
+export function getShipment(id) {
+  return request({
+    url: '/shipments/warehouse/' + id,
+    method: 'get'
+  })
+}
+
+// 新增warehouseInfo
+export function addShipment(data) {
+  return request({
+    url: '/shipments/warehouse',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改warehouseInfo
+export function updateShipment(data) {
+  return request({
+    url: '/shipments/warehouse',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除warehouseInfo
+export function delShipment(id) {
+  return request({
+    url: '/shipments/warehouse/' + id,
+    method: 'delete'
+  })
+}

@@ -4,19 +4,32 @@
     <el-form ref="formRef" :model="formData" :rules="rules" size="default" label-width="160px" label-position="top">
       <el-row :gutter="20">
         <!-- 表单字段 -->
+        <!-- <el-col :span="12">
+          <el-form-item label="Warehouse Location/仓库位置" prop="warehouse_location">
+            <el-select v-model="formData.warehouse_location" placeholder="Select Warehouse Location" clearable :style="{width: '100%'}">
+              <el-option label="LA盈仓" value="linkt-la-01"></el-option>
+              <el-option label="NJ盈仓" value="linkt-nj-01"></el-option>
+              <el-option label="SVG盈仓" value="linkt-svg-01"></el-option>
+              <el-option label="Dallas盈仓" value="linkt-dal-01"></el-option>
+              <el-option label="西雅图代理仓" value="linkt-sea-01"></el-option>
+              <el-option label="芝加哥代理仓" value="linkt-chi-01"></el-option>
+              <el-option label="休斯顿代理仓" value="linkt-hou-01"></el-option>
+              <el-option label="FL代理仓" value="linkt-mia-01"></el-option>
+              <el-option label="加州代理仓" value="linkt-hwd-01"></el-option>
+              <el-option label="Custom/自定义" value="custom"></el-option>
+            </el-select>
+          </el-form-item>
+        </el-col> -->
         <el-col :span="12">
           <el-form-item label="Warehouse Location/仓库位置" prop="warehouse_location">
             <el-select v-model="formData.warehouse_location" placeholder="Select Warehouse Location" clearable :style="{width: '100%'}">
-              <el-option label="LA盈仓" value="LA"></el-option>
-              <el-option label="NJ盈仓" value="NJ"></el-option>
-              <el-option label="SVG盈仓" value="SVG"></el-option>
-              <el-option label="Dallas盈仓" value="DAL"></el-option>
-              <el-option label="西雅图代理仓" value="Seattle"></el-option>
-              <el-option label="芝加哥代理仓" value="Chicago"></el-option>
-              <el-option label="休斯顿代理仓" value="Houston"></el-option>
-              <el-option label="FL代理仓" value="Miami"></el-option>
-              <el-option label="加州代理仓" value="Hayward"></el-option>
-              <el-option label="Custom/自定义" value="custom"></el-option>
+              <el-option
+                v-for="item in warehouseList"
+                :key="item.warehouseCode"
+                :label="item.warehouseName"
+                :value="item.warehouseCode"
+              />
+              <el-option label="Custom/自定义" value="custom" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -268,12 +281,12 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as XLSX from 'xlsx'
 import CargoInfo from './CargoInfo.vue'
 import ResultsTable from './ResultsTable.vue'
-import { submitQuoteForm } from '@/api/shipments/shipments'
+import { submitQuoteForm, listWarehouses } from '@/api/shipments/shipments'
 import CustomFooter from './notice.vue';
 // 控制表单加载的状态
 const loading = ref(false);
@@ -309,7 +322,26 @@ const showQuoteDetails = (row) => {
   calculateRecommendedPrice(row);
   quoteDialogVisible.value = true;
 };
+// 添加到 reactive/ref 定义区域
+const warehouseList = ref([])
 
+// 添加到方法区域
+const getWarehouseList = async () => {
+  try {
+    const response = await listWarehouses()
+    console.log(response)
+    if (response && response.rows && Array.isArray(response.rows)) {
+      warehouseList.value = response.rows.map(warehouse => ({
+        warehouseCode: warehouse.warehouseCode,
+        warehouseName: warehouse.warehouseName
+      }));
+    }
+    
+  } catch (error) {
+    console.error('Failed to fetch warehouse list:', error)
+    ElMessage.error('Failed to load warehouse list')
+  }
+}
 // Method to select a quote
 const selectQuote = (quote) => {
   selectedQuote.value = quote.label; // Track the selected quote label
@@ -690,6 +722,7 @@ const loadDataFromSession = () => {
 // 页面加载时恢复数据
 onMounted(() => {
   loadDataFromSession();  // 页面挂载时从 sessionStorage 恢复数据
+  getWarehouseList();
 });
 
 // 监听 formData 的变化，并将其保存到 sessionStorage
