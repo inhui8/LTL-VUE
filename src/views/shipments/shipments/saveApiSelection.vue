@@ -9,25 +9,11 @@
         <el-checkbox label="daylight">Daylight API</el-checkbox>
         <el-checkbox label="auptix">Auptix API</el-checkbox>
         <el-checkbox label="customPrice">custom API</el-checkbox>
+        <el-checkbox label="XPO">XPO API</el-checkbox>
+        <el-checkbox label="MotherShip">MotherShip API</el-checkbox>
       </el-checkbox-group>
 
-      <!-- 非联宇利润 和 联宇利润 在同一行 -->
-      <el-row :gutter="20" style="margin-bottom: 20px;">
-        <el-col :span="12">
-          <el-form-item label="非联宇利润">
-            <el-input v-model="nonLienyuProfit" placeholder="请输入非联宇利润">
-              <template #append>%</template>
-            </el-input>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="联宇利润">
-            <el-input v-model="lienyuProfit" placeholder="请输入联宇利润">
-              <template #append>%</template>
-            </el-input>
-          </el-form-item>
-        </el-col>
-      </el-row>
+
 
       <!-- 提交按钮 -->
       <el-button type="primary" @click="submitForm">保存配置</el-button>

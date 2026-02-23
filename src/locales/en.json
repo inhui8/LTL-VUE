@@ -1,0 +1,69 @@
+{
+  "menus": {
+    "首页": "Home",
+    "外部页面": "External Page",
+    "LTL报价": "LTL Quotation",
+    "LTL报价页面": "LTL Quotation Page",
+    "LTL报价历史": "LTL Quotation History",
+    "LTL_API管理": "LTL API Management",
+    "系统管理": "System Management",
+    "系统监控": "System Monitoring",
+    "系统工具": "System Tools",
+    "装车预约": "Loading Appointment",
+    "用户管理": "User Management",
+    "角色管理": "Role Management",
+    "菜单管理": "Menu Management",
+    "部门管理": "Department Management",
+    "岗位管理": "Position Management",
+    "字典管理": "Dictionary Management",
+    "参数设置": "Parameter Settings",
+    "通知公告": "Notifications",
+    "日志管理": "Log Management",
+    "操作日志": "Operation Log",
+    "登录日志": "Login Log",
+    "在线用户": "Online Users",
+    "定时任务": "Scheduled Tasks",
+    "数据监控": "Data Monitoring",
+    "服务监控": "Service Monitoring",
+    "缓存监控": "Cache Monitoring",
+    "缓存列表": "Cache List",
+    "表单构建": "Form Builder",
+    "代码生成": "Code Generation",
+    "系统接口": "System API",
+    "供应商装车预约": "Supplier Loading Appointment",
+    "装车预约配置": "Loading Appointment Configuration",
+    "预约页面": "Appointment Page",
+    "预约信息汇总": "Appointment Information Summary"
+  },
+  "footer": {
+    "title": "Notes:",
+    "goodsInfo": "Goods Information",
+    "goodsInfoDetails": [
+      "LTL goods are recommended to have a volume not exceeding 15cbm (approximately 8 pallets) and a weight not exceeding 5 tons (11000lbs). If exceeded, please split the quote or refer.",
+      "For warehouse addresses, the dimensions should not exceed 240CM in length, and single items should weigh no more than 2 tons.",
+      "For non-warehouse addresses, the first dimension should not exceed 240CM, the second dimension should not exceed 120CM, and single items should weigh no more than 1 ton.",
+      "Additional fees apply for non-commercial addresses, such as construction sites, exhibition centers, hospitals, schools, residences, etc.",
+      "Special goods require separate inquiries, such as display screens, amplifiers, wigs, etc."
+    ],
+    "transportInfo": "Transport Information",
+    "transportInfoDetails": [
+      "LTL only picks up/delivers on working days.",
+      "The reference transit time does not include pickup/delivery day."
+    ],
+    "quoteInfo": "Quote Information",
+    "quoteInfoDetails": [
+      "The reference price may fluctuate slightly due to factors such as fuel and weather. It is recommended to reserve space for cost fluctuations.",
+      "It is recommended to choose delivery by appointment to minimize dry run fees.",
+      "Loose cargo packaging type defaults to pallet (48*40inch).",
+      "Weight must include pallet average (50lbs per pallet).",
+      "The reference quote does not include insurance."
+    ],
+    "additionalRequirements": "Additional Requirements",
+    "additionalRequirementsDetails": [
+      "If the unloading conditions of the consignee are unclear, it is recommended to select liftgate + appt.",
+      "If the delivery address is residential, please select residential + liftgate + appt.",
+      "For restricted addresses, select limited access + liftgate + appt.",
+      "The default delivery time is 9am-4pm. If there are special appointment processes or warehouse requirements, please inquire separately."
+    ]
+  }
+}
